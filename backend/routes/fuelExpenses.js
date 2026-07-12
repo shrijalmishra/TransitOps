@@ -6,7 +6,7 @@ const { fuelExpenseSchemas } = require('../validations');
 
 const router = express.Router();
 
-router.get('/fuel-logs', auth, async (req, res) => {
+router.get('/fuel-logs', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst']), async (req, res) => {
   try {
     const { vehicleId, tripId } = req.query;
     const where = {};
@@ -49,7 +49,7 @@ router.post('/fuel-logs', auth, checkRole(['Admin', 'Fleet Manager', 'Financial 
   }
 });
 
-router.get('/expenses', auth, async (req, res) => {
+router.get('/expenses', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst']), async (req, res) => {
   try {
     const { vehicleId, tripId, type } = req.query;
     const where = {};

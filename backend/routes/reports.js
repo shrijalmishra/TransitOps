@@ -1,10 +1,10 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { auth, checkRole } = require('../middleware/auth');
 const { Vehicle, Trip, FuelLog, Maintenance, Expense } = require('../models');
 
 const router = express.Router();
 
-router.get('/fuel-efficiency', auth, async (req, res) => {
+router.get('/fuel-efficiency', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst', 'Safety Officer']), async (req, res) => {
   try {
     const vehicles = await Vehicle.findAll({ attributes: ['id', 'registrationNumber', 'name'] });
     const trips = await Trip.findAll({
@@ -30,7 +30,7 @@ router.get('/fuel-efficiency', auth, async (req, res) => {
   }
 });
 
-router.get('/operational-cost', auth, async (req, res) => {
+router.get('/operational-cost', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst', 'Safety Officer']), async (req, res) => {
   try {
     const vehicles = await Vehicle.findAll({ attributes: ['id', 'registrationNumber', 'name'] });
     const fuelLogs = await FuelLog.findAll({ attributes: ['vehicleId', 'totalCost'] });
@@ -57,7 +57,7 @@ router.get('/operational-cost', auth, async (req, res) => {
   }
 });
 
-router.get('/vehicle-roi', auth, async (req, res) => {
+router.get('/vehicle-roi', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst', 'Safety Officer']), async (req, res) => {
   try {
     const vehicles = await Vehicle.findAll({ attributes: ['id', 'registrationNumber', 'name', 'acquisitionCost'] });
     const trips = await Trip.findAll({
@@ -98,7 +98,7 @@ router.get('/vehicle-roi', auth, async (req, res) => {
   }
 });
 
-router.get('/export-csv', auth, async (req, res) => {
+router.get('/export-csv', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst', 'Safety Officer']), async (req, res) => {
   try {
     const trips = await Trip.findAll({
       include: [

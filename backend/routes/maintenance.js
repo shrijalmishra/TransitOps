@@ -6,7 +6,7 @@ const { maintenanceSchemas } = require('../validations');
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), async (req, res) => {
   try {
     const maintenances = await Maintenance.findAll({
       include: [{ model: Vehicle, as: 'vehicle', attributes: ['id', 'registrationNumber', 'name'] }],
@@ -18,7 +18,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), validate(maintenanceSchemas.create), async (req, res) => {
+router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), validate(maintenanceSchemas.create), async (req, res) => {
   try {
     const { vehicleId, type, description, cost, startDate, endDate, status } = req.body;
     const vehicle = await Vehicle.findByPk(vehicleId);
@@ -45,7 +45,7 @@ router.post('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), 
   }
 });
 
-router.put('/:id/close', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), validate(maintenanceSchemas.close), async (req, res) => {
+router.put('/:id/close', auth, checkRole(['Admin', 'Fleet Manager']), validate(maintenanceSchemas.close), async (req, res) => {
   try {
     const maintenance = await Maintenance.findByPk(req.params.id, {
       include: [{ model: Vehicle, as: 'vehicle' }],

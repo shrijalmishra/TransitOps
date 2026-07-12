@@ -6,7 +6,7 @@ const { driverSchemas } = require('../validations');
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst']), async (req, res) => {
   try {
     const { status } = req.query;
     const where = {};
@@ -28,7 +28,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), validate(driverSchemas.create), async (req, res) => {
+router.post('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), validate(driverSchemas.create), async (req, res) => {
   try {
     const { licenseNumber } = req.body;
     const existing = await Driver.findOne({ where: { licenseNumber } });
@@ -40,7 +40,7 @@ router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), validate(driverSch
   }
 });
 
-router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager']), validate(driverSchemas.update), async (req, res) => {
+router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), validate(driverSchemas.update), async (req, res) => {
   try {
     const driver = await Driver.findByPk(req.params.id);
     if (!driver) return res.status(404).json({ message: 'Driver not found' });
@@ -55,7 +55,7 @@ router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager']), validate(driverS
   }
 });
 
-router.delete('/:id', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.delete('/:id', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), async (req, res) => {
   try {
     const driver = await Driver.findByPk(req.params.id);
     if (!driver) return res.status(404).json({ message: 'Driver not found' });

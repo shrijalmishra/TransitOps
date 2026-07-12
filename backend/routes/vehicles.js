@@ -6,7 +6,7 @@ const { vehicleSchemas } = require('../validations');
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst']), async (req, res) => {
   try {
     const { type, status, region } = req.query;
     const where = {};
