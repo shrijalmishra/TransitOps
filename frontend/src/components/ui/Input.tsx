@@ -17,7 +17,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="mb-1.5 block text-sm font-medium text-slate-300"
+            className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-400"
           >
             {label}
           </label>
@@ -33,18 +33,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             type={type}
             className={cn(
-              'h-10 w-full rounded-lg border bg-slate-900 px-3 text-sm text-slate-200',
+              'h-11 w-full rounded-lg border bg-slate-900/40 px-3 text-sm text-slate-200 shadow-sm transition-all duration-200 backdrop-blur-sm',
               'placeholder:text-slate-500',
-              'focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20',
+              'focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 focus:bg-slate-900/60',
               'disabled:cursor-not-allowed disabled:opacity-50',
               icon && 'pl-10',
-              error ? 'border-rose-500/70' : 'border-slate-700',
+              error ? 'border-rose-500/70 focus:border-rose-500/70 focus:ring-rose-500/20' : 'border-white/10',
               className,
             )}
             {...props}
           />
         </div>
-        {error && <p className="mt-1 text-xs text-rose-400">{error}</p>}
+        {error && <p className="mt-1 text-xs text-rose-400 animate-fade-in">{error}</p>}
       </div>
     )
   },

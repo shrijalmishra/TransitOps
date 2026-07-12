@@ -19,9 +19,9 @@ interface TableProps<T> {
 }
 
 function SortArrow({ direction }: { direction: 'asc' | 'desc' | null }) {
-  if (direction === 'asc') return <span className="text-amber-500">▲</span>
-  if (direction === 'desc') return <span className="text-amber-500">▼</span>
-  return <span className="text-slate-600">↕</span>
+  if (direction === 'asc') return <span className="text-amber-500 text-xs transition-colors">▲</span>
+  if (direction === 'desc') return <span className="text-amber-500 text-xs transition-colors">▼</span>
+  return <span className="text-slate-600 text-xs transition-colors group-hover:text-slate-400">↕</span>
 }
 
 function ChevronLeft() {
@@ -40,7 +40,7 @@ function ChevronRight() {
   )
 }
 
-function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
+function Table<T>({ columns, data, getRowId, pageSize = 10, actions, emptyMessage }: TableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
@@ -82,17 +82,17 @@ function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-slate-700">
+    <div className="w-full overflow-hidden rounded-xl border border-white/5 bg-slate-900/40 shadow-lg backdrop-blur-md">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className="bg-slate-800 text-slate-400">
+            <tr className="border-b border-white/10 bg-black/20 text-slate-400">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    'whitespace-nowrap px-4 py-3 font-medium uppercase tracking-wide',
-                    col.sortable && 'cursor-pointer select-none',
+                    'group whitespace-nowrap px-4 py-3.5 text-xs font-semibold uppercase tracking-wider',
+                    col.sortable && 'cursor-pointer select-none hover:text-slate-200 transition-colors',
                     col.className,
                   )}
                   onClick={col.sortable ? () => toggleSort(col.key) : undefined}
@@ -108,18 +108,18 @@ function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
                 </th>
               ))}
               {actions && (
-                <th className="whitespace-nowrap px-4 py-3 font-medium uppercase tracking-wide text-right">
+                <th className="whitespace-nowrap px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-white/5">
             {pagedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="bg-slate-900 px-4 py-10 text-center text-slate-500"
+                  className="px-4 py-12 text-center text-slate-500"
                 >
                   {emptyMessage ?? 'No records found.'}
                 </td>
@@ -128,18 +128,18 @@ function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
               pagedData.map((row) => (
                 <tr
                   key={getRowId(row)}
-                  className="border-t border-slate-800 bg-slate-900 transition-colors hover:bg-slate-800/60"
+                  className="group transition-colors duration-200 hover:bg-white/5"
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={cn('px-4 py-3 text-slate-300', col.className)}
+                      className={cn('px-4 py-3.5 text-slate-300 transition-colors group-hover:text-slate-200', col.className)}
                     >
                       {col.render ? col.render(row) : (row[col.key as keyof T] as ReactNode)}
                     </td>
                   ))}
                   {actions && (
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-slate-300">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-slate-300">
                       {actions(row)}
                     </td>
                   )}
@@ -150,16 +150,16 @@ function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
         </table>
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-400">
+        <div className="flex items-center justify-between border-t border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-400">
           <span>
-            Page {currentPage} of {totalPages}
+            Page <span className="font-medium text-slate-200">{currentPage}</span> of <span className="font-medium text-slate-200">{totalPages}</span> &nbsp;&middot;&nbsp; {sortedData.length} records
           </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-slate-300"
               aria-label="Previous page"
             >
               <ChevronLeft />
@@ -168,7 +168,7 @@ function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-slate-300"
               aria-label="Next page"
             >
               <ChevronRight />

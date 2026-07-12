@@ -1,113 +1,87 @@
-import {
-  useEffect,
-  useState,
-  type ReactNode,
-  type MouseEvent,
-  type KeyboardEvent,
-} from 'react'
+import { useEffect, type ReactNode } from 'react'
+import { X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
 interface ModalProps {
-  trigger?: ReactNode
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  title?: string
-  children?: ReactNode
+  open: boolean
+  onClose: () => void
+  title: string
+  children: ReactNode
   footer?: ReactNode
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
-function CloseIcon() {
-  return (
-    <svg
-      className="h-5 w-5"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={2}
-      stroke="currentColor"
-      aria-hidden="true"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  )
+const SIZE_CLASSES = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
 }
 
-const Modal = ({
-  trigger,
-  open: controlledOpen,
-  onOpenChange,
-  title,
-  children,
-  footer,
-}: ModalProps) => {
-  const isControlled = controlledOpen !== undefined
-  const [internalOpen, setInternalOpen] = useState(false)
-  const open = isControlled ? controlledOpen : internalOpen
-
-  const setOpen = (next: boolean) => {
-    if (!isControlled) setInternalOpen(next)
-    onOpenChange?.(next)
-  }
-
+const Modal = ({ open, onClose, title, children, footer, size = 'md' }: ModalProps) => {
   useEffect(() => {
-    if (!open) return
-    const onKeyDown = (e: KeyboardEvent<Document>) => {
-      if (e.key === 'Escape') setOpen(false)
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
     }
-    document.addEventListener('keydown', onKeyDown as unknown as (e: globalThis.KeyboardEvent) => void)
     return () => {
-      document.removeEventListener('keydown', onKeyDown as unknown as (e: globalThis.KeyboardEvent) => void)
+      document.body.style.overflow = ''
     }
   }, [open])
 
-  const onOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) setOpen(false)
-  }
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (open) document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [open, onClose])
+
+  if (!open) return null
 
   return (
-    <>
-      {trigger && !isControlled && (
-        <div onClick={() => setOpen(true)} className="inline-block cursor-pointer">
-          {trigger}
-        </div>
-      )}
-      {isControlled && trigger}
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={onOverlayClick}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            className={cn(
-              'relative mx-4 max-w-lg w-full rounded-xl border border-slate-700 bg-slate-900 shadow-2xl',
-              'animate-in fade-in-0 zoom-in-95 duration-200',
-            )}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-fade-in"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal Container */}
+      <div
+        className={cn(
+          'relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-2xl backdrop-blur-xl animate-scale-in',
+          SIZE_CLASSES[size],
+        )}
+      >
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-white/5 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-100 tracking-tight">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            aria-label="Close"
           >
-            {title && (
-              <div className="border-b border-slate-700 px-6 py-4">
-                <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close"
-              className="absolute right-4 top-4 text-slate-400 transition-colors hover:text-slate-200"
-            >
-              <CloseIcon />
-            </button>
-            <div className="px-6 py-5 text-sm text-slate-300">{children}</div>
-            {footer && (
-              <div className="flex justify-end gap-2 border-t border-slate-700 px-6 py-4">
-                {footer}
-              </div>
-            )}
-          </div>
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      )}
-    </>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-white/5 bg-black/20 px-6 py-4">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

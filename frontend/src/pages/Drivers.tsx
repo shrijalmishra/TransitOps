@@ -49,7 +49,7 @@ const Drivers = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Driver | null>(null)
   const [form, setForm] = useState<DriverForm>(emptyForm)
-  const [formErrors, setFormErrors] = useState<Partial<Record<keyof DriverForm, string>>({})
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof DriverForm, string>>>({})
   const [submitting, setSubmitting] = useState(false)
 
   const load = useCallback(async () => {

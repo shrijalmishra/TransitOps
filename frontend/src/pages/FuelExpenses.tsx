@@ -284,7 +284,7 @@ const FuelExpenses = () => {
       key: 'costPerLiter',
       header: 'Cost/L (₹)',
       sortable: true,
-      render: (f) => formatCurrency(f.costPerLiter, true),
+      render: (f) => formatCurrency(f.costPerLiter),
     },
     {
       key: 'totalCost',
