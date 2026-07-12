@@ -6,7 +6,10 @@ const router = express.Router();
 
 router.get('/kpis', auth, async (req, res) => {
   try {
-    const vehicles = await Vehicle.findAll();
+    const { region } = req.query;
+    const vehicleWhere = {};
+    if (region) vehicleWhere.region = region;
+    const vehicles = await Vehicle.findAll({ where: vehicleWhere });
     const trips = await Trip.findAll();
     const drivers = await Driver.findAll();
 

@@ -31,7 +31,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'TransitOps API is running' });
 });
 
-sequelize.sync({ alter: true }).then(() => {
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+});
+
+sequelize.sync().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

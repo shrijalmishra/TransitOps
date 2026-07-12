@@ -78,7 +78,7 @@ router.get('/vehicle-roi', auth, async (req, res) => {
         .reduce((sum, f) => sum + (f.totalCost || 0), 0);
       const totalCost = maintenanceCost + fuelCost;
       const netProfit = revenue - totalCost;
-      const roiValue = v.acquisitionCost > 0 ? ((netProfit - v.acquisitionCost) / v.acquisitionCost) * 100 : 0;
+      const roiValue = v.acquisitionCost > 0 ? ((revenue - totalCost) / v.acquisitionCost) * 100 : 0;
       return {
         vehicleId: v.id,
         registrationNumber: v.registrationNumber,

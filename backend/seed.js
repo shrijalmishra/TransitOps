@@ -36,6 +36,7 @@ async function seed() {
         odometer: 45000,
         acquisitionCost: 350000,
         status: 'Available',
+        region: 'Chennai',
       },
       {
         registrationNumber: 'TN-02-5678',
@@ -45,6 +46,7 @@ async function seed() {
         odometer: 78000,
         acquisitionCost: 850000,
         status: 'Available',
+        region: 'Coimbatore',
       },
       {
         registrationNumber: 'TN-03-9012',
@@ -54,6 +56,7 @@ async function seed() {
         odometer: 120000,
         acquisitionCost: 1500000,
         status: 'Available',
+        region: 'Hyderabad',
       },
     ]);
     console.log('Vehicles created');

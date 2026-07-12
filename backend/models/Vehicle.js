@@ -36,6 +36,10 @@ const Vehicle = sequelize.define('Vehicle', {
     allowNull: false,
     defaultValue: 'Available',
   },
+  region: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 }, {
   tableName: 'vehicles',
   timestamps: true,

@@ -8,10 +8,11 @@ const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
   try {
-    const { type, status } = req.query;
+    const { type, status, region } = req.query;
     const where = {};
     if (type) where.type = type;
     if (status) where.status = status;
+    if (region) where.region = region;
     const vehicles = await Vehicle.findAll({ where, order: [['createdAt', 'DESC']] });
     res.json(vehicles);
   } catch (err) {
