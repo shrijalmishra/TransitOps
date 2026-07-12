@@ -23,14 +23,14 @@ import Button from '../components/ui/Button'
 import { formatCurrency, formatNumber } from '../utils/statusHelpers'
 
 const chartTooltipStyle = {
-  backgroundColor: '#1e293b',
-  border: '1px solid #334155',
+  backgroundColor: 'rgba(18, 25, 40, 0.9)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
   borderRadius: '8px',
   color: '#e2e8f0',
   fontSize: '12px',
 }
 
-const ROI_COLORS = ['#f59e0b', '#f97316', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
+const ROI_COLORS = ['#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#6366f1', '#8b5cf6']
 
 const Reports = () => {
   const { success, error: toastError } = useToast()
@@ -206,7 +206,7 @@ const Reports = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-100">
-            <FileText className="h-6 w-6 text-amber-500" /> Reports
+            <FileText className="h-6 w-6 text-blue-500" /> Reports
           </h1>
           <p className="text-sm text-slate-400">Fleet analytics and operational insights</p>
         </div>
@@ -222,8 +222,8 @@ const Reports = () => {
             onClick={() => setTab(t)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               tab === t
-                ? 'bg-amber-500 text-slate-950'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
             }`}
           >
             {t === 'efficiency'
@@ -242,10 +242,10 @@ const Reports = () => {
       )}
 
       {loading ? (
-        <div className="h-80 animate-pulse rounded-xl border border-slate-700 bg-slate-800" />
+        <div className="h-80 animate-pulse rounded-xl glass-panel" />
       ) : (
         <>
-          <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+          <div className="rounded-xl glass-panel p-5">
             <h2 className="mb-4 text-sm font-semibold text-slate-200">
               {tab === 'efficiency'
                 ? 'Fuel Efficiency by Vehicle (km/L)'
@@ -261,7 +261,7 @@ const Reports = () => {
                     <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
                     <YAxis stroke="#64748b" fontSize={12} />
                     <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: '#33415555' }} />
-                    <Bar dataKey="fuelEfficiency" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="fuelEfficiency" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 ) : tab === 'cost' ? (
                   <BarChart data={operationalData}>
@@ -270,11 +270,11 @@ const Reports = () => {
                     <YAxis stroke="#64748b" fontSize={12} />
                     <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: '#33415555' }} />
                     <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
-                    <Bar dataKey="fuelCost" name="Fuel Cost" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="fuelCost" name="Fuel Cost" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     <Bar
                       dataKey="maintenanceCost"
                       name="Maintenance Cost"
-                      fill="#f97316"
+                      fill="#06b6d4"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -298,7 +298,7 @@ const Reports = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+          <div className="rounded-xl glass-panel p-5">
             <h2 className="mb-4 text-sm font-semibold text-slate-200">Detailed Breakdown</h2>
             {tab === 'efficiency' ? (
               <Table

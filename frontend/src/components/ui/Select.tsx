@@ -36,10 +36,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             className={cn(
-              'h-11 w-full appearance-none rounded-lg border bg-slate-900/40 px-3 text-sm text-slate-200 shadow-sm transition-all duration-200 backdrop-blur-sm',
-              'focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 focus:bg-slate-900/60',
+              'h-11 w-full appearance-none rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-slate-200 shadow-sm transition-all duration-200',
+              'focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 focus:bg-white/10',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              error ? 'border-rose-500/70 focus:border-rose-500/70 focus:ring-rose-500/20' : 'border-white/10',
+              error ? 'border-rose-500/70 focus:border-rose-500/70 focus:ring-rose-500/20' : '',
               className,
             )}
             style={{

@@ -49,10 +49,9 @@ const Modal = ({ open, onClose, title, children, footer, size = 'md' }: ModalPro
         aria-hidden="true"
       />
 
-      {/* Modal Container */}
       <div
         className={cn(
-          'relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-2xl backdrop-blur-xl animate-scale-in',
+          'relative flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-2xl glass-panel animate-scale-in',
           SIZE_CLASSES[size],
         )}
       >
@@ -62,7 +61,7 @@ const Modal = ({ open, onClose, title, children, footer, size = 'md' }: ModalPro
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             aria-label="Close"
           >
             <X className="h-5 w-5" />

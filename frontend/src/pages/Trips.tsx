@@ -346,8 +346,8 @@ const Trips = () => {
             onClick={() => setFilter(f)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === f
-                ? 'bg-amber-500 text-slate-950'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
             }`}
           >
             {f === 'All' ? 'All' : f}
@@ -358,8 +358,8 @@ const Trips = () => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search trips..."
-            className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-amber-500/60 focus:outline-none"
+            placeholder="Search by vehicle, driver, or origin/dest..."
+            className="h-10 w-full rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-blue-500/60 focus:outline-none"
           />
         </div>
       </div>
@@ -371,7 +371,7 @@ const Trips = () => {
       )}
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-xl border border-slate-700 bg-slate-800" />
+        <div className="h-64 animate-pulse rounded-xl glass-panel" />
       ) : (
         <Table
           columns={columns}

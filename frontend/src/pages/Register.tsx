@@ -52,10 +52,10 @@ const Register = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+    <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500 text-slate-950">
+          <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500 text-white">
             <Bus className="h-7 w-7" />
           </span>
           <h1 className="text-2xl font-bold text-slate-100">TransitOps</h1>
@@ -64,7 +64,7 @@ const Register = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl"
+          className="rounded-2xl glass-panel p-6 shadow-xl"
         >
           <h2 className="mb-6 text-lg font-semibold text-slate-100">Register</h2>
 
@@ -135,7 +135,7 @@ const Register = () => {
 
           <p className="mt-4 text-center text-sm text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-amber-400 hover:text-amber-300">
+            <Link to="/login" className="font-medium text-blue-400 hover:text-blue-300">
               Sign in
             </Link>
           </p>

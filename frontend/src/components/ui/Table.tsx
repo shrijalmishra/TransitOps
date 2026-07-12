@@ -19,8 +19,8 @@ interface TableProps<T> {
 }
 
 function SortArrow({ direction }: { direction: 'asc' | 'desc' | null }) {
-  if (direction === 'asc') return <span className="text-amber-500 text-xs transition-colors">▲</span>
-  if (direction === 'desc') return <span className="text-amber-500 text-xs transition-colors">▼</span>
+  if (direction === 'asc') return <span className="text-blue-400 text-xs transition-colors">▲</span>
+  if (direction === 'desc') return <span className="text-blue-400 text-xs transition-colors">▼</span>
   return <span className="text-slate-600 text-xs transition-colors group-hover:text-slate-400">↕</span>
 }
 
@@ -82,7 +82,7 @@ function Table<T>({ columns, data, getRowId, pageSize = 10, actions, emptyMessag
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-white/5 bg-slate-900/40 shadow-lg backdrop-blur-md">
+    <div className="w-full overflow-hidden rounded-xl glass-panel">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm">
           <thead>

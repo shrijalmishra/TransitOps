@@ -327,7 +327,7 @@ const FuelExpenses = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-100">
-            <Fuel className="h-6 w-6 text-amber-500" /> Fuel &amp; Expenses
+            <Fuel className="h-6 w-6 text-blue-500" /> Fuel &amp; Expenses
           </h1>
           <p className="text-sm text-slate-400">Monitor fuel consumption and operating costs</p>
         </div>
@@ -337,13 +337,13 @@ const FuelExpenses = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+        <div className="rounded-xl glass-panel p-5">
           <p className="text-sm text-slate-400">Total Fuel Spend</p>
-          <p className="mt-1 text-2xl font-bold text-amber-400">{formatCurrency(totalFuel)}</p>
+          <p className="mt-1 text-2xl font-bold text-blue-400">{formatCurrency(totalFuel)}</p>
         </div>
-        <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+        <div className="rounded-xl glass-panel p-5">
           <p className="text-sm text-slate-400">Total Operating Expenses</p>
-          <p className="mt-1 text-2xl font-bold text-orange-400">{formatCurrency(totalExpenses)}</p>
+          <p className="mt-1 text-2xl font-bold text-cyan-400">{formatCurrency(totalExpenses)}</p>
         </div>
       </div>
 
@@ -354,8 +354,8 @@ const FuelExpenses = () => {
             onClick={() => setTab(t)}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               tab === t
-                ? 'bg-amber-500 text-slate-950'
-                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
             }`}
           >
             {t === 'fuel' ? <Fuel className="h-4 w-4" /> : <Receipt className="h-4 w-4" />}
@@ -368,7 +368,7 @@ const FuelExpenses = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`Search ${tab}...`}
-            className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-amber-500/60 focus:outline-none"
+            className="h-10 w-full rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-blue-500/60 focus:outline-none"
           />
         </div>
       </div>
@@ -380,7 +380,7 @@ const FuelExpenses = () => {
       )}
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-xl border border-slate-700 bg-slate-800" />
+        <div className="h-64 animate-pulse rounded-xl glass-panel" />
       ) : tab === 'fuel' ? (
         <Table
           columns={fuelColumns}

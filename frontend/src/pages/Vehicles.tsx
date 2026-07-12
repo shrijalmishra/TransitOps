@@ -218,7 +218,7 @@ const Vehicles = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by registration or name..."
-          className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-amber-500/60 focus:outline-none"
+          className="h-10 w-full rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-blue-500/60 focus:outline-none"
         />
       </div>
 
@@ -229,7 +229,7 @@ const Vehicles = () => {
       )}
 
       {loading ? (
-        <div className="h-64 animate-pulse rounded-xl border border-slate-700 bg-slate-800" />
+        <div className="h-64 animate-pulse rounded-xl glass-panel" />
       ) : (
         <Table
           columns={columns}
