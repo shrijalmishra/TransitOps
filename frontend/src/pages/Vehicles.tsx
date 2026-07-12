@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Plus, Search, Pencil, PowerOff, Truck } from 'lucide-react'
+import { Plus, Search, Pencil, PowerOff } from 'lucide-react'
 import api, { getErrorMessage } from '../services/api'
 import type { Vehicle, VehicleStatus, VehicleType } from '../types'
 import {
@@ -45,7 +45,7 @@ const Vehicles = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Vehicle | null>(null)
   const [form, setForm] = useState<VehicleForm>(emptyForm)
-  const [formErrors, setFormErrors] = useState<Partial<Record<keyof VehicleForm, string>>({})
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof VehicleForm, string>>>({})
   const [submitting, setSubmitting] = useState(false)
 
   const load = useCallback(async () => {
@@ -146,7 +146,7 @@ const Vehicles = () => {
     if (!window.confirm(`Retire vehicle ${vehicle.registrationNumber}? This sets its status to Retired.`))
       return
     try {
-      await api.put<Vehicle>(`/vehicles/${vehicle.id}`)
+      await api.put<Vehicle>(`/vehicles/${vehicle.id}`, { status: 'Retired' })
       success(`${vehicle.registrationNumber} retired.`)
       await load()
     } catch (err) {

@@ -177,7 +177,7 @@ const Maintenance = () => {
       key: 'endDate',
       header: 'End Date',
       sortable: true,
-      render: (m) => formatDate(m.endDate),
+      render: (m) => m.endDate ? formatDate(m.endDate) : '—',
     },
     {
       key: 'cost',

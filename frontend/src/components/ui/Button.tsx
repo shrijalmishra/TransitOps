@@ -13,16 +13,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: 'bg-amber-500 hover:bg-amber-600 text-slate-950',
-  secondary: 'bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200',
-  ghost: 'bg-transparent hover:bg-slate-800 text-slate-300',
-  danger: 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 border border-rose-500/30',
+  primary: 'bg-gradient-to-b from-amber-400 to-amber-600 border border-amber-500/50 text-slate-950 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] shadow-lg shadow-amber-500/20 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:brightness-90',
+  secondary: 'bg-white/5 border border-white/10 text-slate-200 shadow-sm hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 active:translate-y-0',
+  ghost: 'bg-transparent text-slate-300 hover:bg-white/5 hover:text-slate-100',
+  danger: 'bg-gradient-to-b from-rose-500/20 to-rose-500/10 border border-rose-500/30 text-rose-400 shadow-sm hover:bg-rose-500/20 hover:border-rose-500/50 hover:shadow-rose-500/20 hover:-translate-y-0.5 active:translate-y-0',
 }
 
 const SIZE_CLASSES: Record<Size, string> = {
   sm: 'h-8 px-3 text-xs gap-1.5',
   md: 'h-10 px-4 text-sm gap-2',
-  lg: 'h-12 px-6 text-base gap-2.5',
+  lg: 'h-11 px-6 text-sm font-semibold gap-2.5',
 }
 
 function Spinner() {
@@ -71,9 +71,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center rounded-lg font-medium transition-colors',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+          'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950',
+          'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:brightness-100',
           VARIANT_CLASSES[variant],
           SIZE_CLASSES[size],
           className,

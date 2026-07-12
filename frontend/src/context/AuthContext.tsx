@@ -1,13 +1,20 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import api, { getErrorMessage } from '../services/api'
-import type { User } from '../types'
+import api from '../services/api'
+import type { User, AuthResponse } from '../types'
+
+export interface RegisterPayload {
+  name: string
+  email: string
+  password: string
+  role?: string
+}
 
 interface AuthContextValue {
   user: User | null
   token: string | null
   loading: boolean
   login: (email: string, password: string, remember: boolean) => Promise<void>
-  register: (payload: { name: string; email: string; password: string }) => Promise<void>
+  register: (payload: RegisterPayload) => Promise<void>
   logout: () => void
 }
 
@@ -62,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function register(payload: { name: string; email: string; password: string }) {
+  async function register(payload: RegisterPayload) {
     const response = await api.post<AuthResponse>('/auth/register', payload)
 
     const { token: authToken, user: authUser } = response.data
