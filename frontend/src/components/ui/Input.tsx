@@ -8,7 +8,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, className, id, ...props }, ref) => {
+  ({ label, error, icon, className, id, type = 'text', ...props }, ref) => {
     const generatedId = useId()
     const inputId = id ?? generatedId
 
@@ -31,13 +31,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            type={type}
             className={cn(
-              'h-10 w-full rounded-lg border bg-slate-900 px-3 text-sm text-slate-100 placeholder:text-slate-500',
-              'focus:outline-none focus:ring-2 focus:ring-amber-500/60',
+              'h-10 w-full rounded-lg border bg-slate-900 px-3 text-sm text-slate-200',
+              'placeholder:text-slate-500',
+              'focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20',
+              'disabled:cursor-not-allowed disabled:opacity-50',
               icon && 'pl-10',
-              error
-                ? 'border-rose-500 focus:ring-rose-500/60'
-                : 'border-slate-700',
+              error ? 'border-rose-500/70' : 'border-slate-700',
               className,
             )}
             {...props}

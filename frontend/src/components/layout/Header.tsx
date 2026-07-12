@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Search, Moon, Sun, ChevronDown, LogOut, User as UserIcon } from 'lucide-react'
+import { Menu, ChevronDown, LogOut, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getInitials } from '../../utils/statusHelpers'
 
@@ -20,16 +20,19 @@ function useBreadcrumb(): string {
   return BREADCRUMB_MAP[segment] ?? 'Dashboard'
 }
 
-const Header = () => {
+interface HeaderProps {
+  onMenuClick: () => void
+}
+
+const Header = ({ onMenuClick }: HeaderProps) => {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [darkMode, setDarkMode] = useState(true)
   const menuRef = useRef<HTMLDivElement>(null)
   const breadcrumb = useBreadcrumb()
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false)
       }
     }
@@ -38,63 +41,67 @@ const Header = () => {
   }, [])
 
   const initials = user ? getInitials(user.name) : 'U'
+  const displayName = user?.name ?? 'User'
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-800 bg-slate-900/95 px-4 backdrop-blur lg:px-6">
-      <div className="hidden text-sm text-slate-400 sm:block">
-        <span className="text-slate-200">TransitOps</span>
-        <span className="mx-2 text-slate-600">/</span>
-        <span className="font-medium text-slate-100">{breadcrumb}</span>
-      </div>
-
-      <div className="relative ml-auto hidden w-72 md:block">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-amber-500/60 focus:outline-none"
-        />
-      </div>
-
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-700 bg-slate-800 px-4">
       <button
-        onClick={() => setDarkMode((d) => !d)}
-        className="rounded-lg border border-slate-700 p-2 text-slate-300 transition-colors hover:bg-slate-800"
-        aria-label="Toggle theme"
-        title="Dark mode toggle (placeholder)"
+        type="button"
+        onClick={onMenuClick}
+        aria-label="Toggle menu"
+        className="rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-700 lg:hidden"
       >
-        {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <Menu className="h-5 w-5" />
       </button>
 
-      <div className="relative" ref={menuRef}>
+      <nav className="text-sm" aria-label="Breadcrumb">
+        <span className="text-slate-400">TransitOps</span>
+        <span className="mx-2 text-slate-500">/</span>
+        <span className="font-medium text-slate-100">{breadcrumb}</span>
+      </nav>
+
+      <div className="relative ml-auto" ref={menuRef}>
         <button
-          onClick={() => setMenuOpen((o) => !o)}
-          className="flex items-center gap-2 rounded-lg border border-slate-700 px-2 py-1.5 text-sm text-slate-200 transition-colors hover:bg-slate-800"
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-700"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-slate-950">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-slate-900">
             {initials}
           </span>
-          <span className="hidden sm:block">
-            {user ? user.name : 'User'}
+          <span className="hidden text-sm font-medium text-slate-200 sm:block">
+            {displayName}
           </span>
           <ChevronDown className="h-4 w-4 text-slate-400" />
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
-            <div className="border-b border-slate-700 px-4 py-3">
-              <p className="text-sm font-medium text-slate-100">
-                {user ? user.name : 'User'}
-              </p>
+          <div
+            role="menu"
+            className="absolute right-4 top-14 min-w-[200px] rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl"
+          >
+            <div className="border-b border-slate-700 px-2 pb-3 pt-1">
+              <p className="text-sm font-medium text-slate-100">{displayName}</p>
               <p className="truncate text-xs text-slate-400">{user?.email}</p>
             </div>
-            <button className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-300 transition-colors hover:bg-slate-700">
-              <UserIcon className="h-4 w-4" /> Profile
+            <button
+              type="button"
+              role="menuitem"
+              className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800"
+            >
+              <UserIcon className="h-4 w-4" />
+              Profile
             </button>
             <button
+              type="button"
+              role="menuitem"
               onClick={logout}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-rose-400 transition-colors hover:bg-slate-700"
+              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-rose-400 transition-colors hover:text-rose-300"
             >
-              <LogOut className="h-4 w-4" /> Logout
+              <LogOut className="h-4 w-4" />
+              Logout
             </button>
           </div>
         )}

@@ -1,11 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react'
-import api, { type AuthResponse } from '../services/api'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import api, { getErrorMessage } from '../services/api'
 import type { User } from '../types'
 
 interface AuthContextValue {
@@ -13,33 +7,11 @@ interface AuthContextValue {
   token: string | null
   loading: boolean
   login: (email: string, password: string, remember: boolean) => Promise<void>
-  register: (payload: RegisterPayload) => Promise<void>
+  register: (payload: { name: string; email: string; password: string }) => Promise<void>
   logout: () => void
-  updateUser: (user: User) => void
-}
-
-export interface RegisterPayload {
-  name: string
-  email: string
-  password: string
-  role?: string
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
-
-const TOKEN_KEY = 'transitops_token'
-const USER_KEY = 'transitops_user'
-
-function persist(token: string, user: User, remember: boolean) {
-  const tokenStore = remember ? localStorage : sessionStorage
-  const userStore = remember ? localStorage : sessionStorage
-  tokenStore.setItem(TOKEN_KEY, token)
-  userStore.setItem(USER_KEY, JSON.stringify(user))
-  if (!remember) {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -48,59 +20,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const storedToken =
-      localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY)
-    const storedUser =
-      localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY)
-    if (storedToken && storedUser) {
+      localStorage.getItem('transitops_token') ||
+      sessionStorage.getItem('transitops_token')
+
+    if (storedToken) {
       setToken(storedToken)
-      try {
-        setUser(JSON.parse(storedUser) as User)
-      } catch {
-        setUser(null)
-      }
+
+      api
+        .get('/auth/me')
+        .then((response) => {
+          setUser(response.data)
+        })
+        .catch(() => {
+          localStorage.removeItem('transitops_token')
+          sessionStorage.removeItem('transitops_token')
+          setToken(null)
+          setUser(null)
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
-  const login = async (email: string, password: string, remember: boolean) => {
-    const { data } = await api.post<AuthResponse>('/auth/login', {
+  async function login(email: string, password: string, remember: boolean) {
+    const response = await api.post<AuthResponse>('/auth/login', {
       email,
-      password,
+      password
     })
-    setToken(data.token)
-    setUser(data.user)
-    persist(data.token, data.user, remember)
+
+    const { token: authToken, user: authUser } = response.data
+    setToken(authToken)
+    setUser(authUser)
+
+    if (remember) {
+      localStorage.setItem('transitops_token', authToken)
+    } else {
+      sessionStorage.setItem('transitops_token', authToken)
+    }
   }
 
-  const register = async (payload: RegisterPayload) => {
-    const { data } = await api.post<AuthResponse>('/auth/register', payload)
-    setToken(data.token)
-    setUser(data.user)
-    persist(data.token, data.user, true)
+  async function register(payload: { name: string; email: string; password: string }) {
+    const response = await api.post<AuthResponse>('/auth/register', payload)
+
+    const { token: authToken, user: authUser } = response.data
+    setToken(authToken)
+    setUser(authUser)
+
+    localStorage.setItem('transitops_token', authToken)
   }
 
-  const logout = () => {
+  function logout() {
     setToken(null)
     setUser(null)
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    sessionStorage.removeItem(TOKEN_KEY)
-    sessionStorage.removeItem(USER_KEY)
-  }
-
-  const updateUser = (next: User) => {
-    setUser(next)
-    if (localStorage.getItem(USER_KEY)) {
-      localStorage.setItem(USER_KEY, JSON.stringify(next))
-    }
-    if (sessionStorage.getItem(USER_KEY)) {
-      sessionStorage.setItem(USER_KEY, JSON.stringify(next))
-    }
+    localStorage.removeItem('transitops_token')
+    sessionStorage.removeItem('transitops_token')
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout, updateUser }}
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        register,
+        logout
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -109,8 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext)
-  if (!context) {
+
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
+
   return context
 }

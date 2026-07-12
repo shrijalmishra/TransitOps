@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes } from 'react'
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { cn } from '../../utils/cn'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -8,28 +8,62 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   size?: Size
   loading?: boolean
+  leftIcon?: ReactNode
+  rightIcon?: ReactNode
 }
 
-const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-amber-500 text-slate-950 hover:bg-amber-400 focus-visible:ring-amber-500',
-  secondary:
-    'bg-slate-700 text-slate-100 hover:bg-slate-600 focus-visible:ring-slate-500',
-  ghost:
-    'bg-transparent text-slate-300 hover:bg-slate-800 focus-visible:ring-slate-600',
-  danger:
-    'bg-rose-600 text-white hover:bg-rose-500 focus-visible:ring-rose-500',
+const VARIANT_CLASSES: Record<Variant, string> = {
+  primary: 'bg-amber-500 hover:bg-amber-600 text-slate-950',
+  secondary: 'bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200',
+  ghost: 'bg-transparent hover:bg-slate-800 text-slate-300',
+  danger: 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 border border-rose-500/30',
 }
 
-const SIZES: Record<Size, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-6 text-base',
+const SIZE_CLASSES: Record<Size, string> = {
+  sm: 'h-8 px-3 text-xs gap-1.5',
+  md: 'h-10 px-4 text-sm gap-2',
+  lg: 'h-12 px-6 text-base gap-2.5',
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="h-4 w-4 animate-spin"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+  )
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { variant = 'primary', size = 'md', loading, className, children, disabled, ...props },
+    {
+      variant = 'primary',
+      size = 'md',
+      loading = false,
+      leftIcon,
+      rightIcon,
+      className,
+      disabled,
+      children,
+      ...props
+    },
     ref,
   ) => {
     return (
@@ -37,19 +71,22 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
+          'inline-flex items-center justify-center rounded-lg font-medium transition-colors',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          VARIANTS[variant],
-          SIZES[size],
+          VARIANT_CLASSES[variant],
+          SIZE_CLASSES[size],
           className,
         )}
         {...props}
       >
-        {loading && (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        {loading ? (
+          <Spinner />
+        ) : (
+          leftIcon && <span className="shrink-0">{leftIcon}</span>
         )}
         {children}
+        {!loading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
       </button>
     )
   },

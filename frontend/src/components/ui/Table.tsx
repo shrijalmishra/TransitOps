@@ -1,13 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, ChevronsUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { cn } from '../../utils/cn'
 
 export interface Column<T> {
   key: string
   header: string
   sortable?: boolean
-  render?: (row: T) => ReactNode
   className?: string
+  render?: (row: T) => ReactNode
 }
 
 interface TableProps<T> {
@@ -16,109 +15,133 @@ interface TableProps<T> {
   getRowId: (row: T) => string
   pageSize?: number
   actions?: (row: T) => ReactNode
-  onSort?: (key: string, direction: 'asc' | 'desc') => void
-  initialSort?: { key: string; direction: 'asc' | 'desc' }
+  emptyMessage?: string
 }
 
-function Table<T>({
-  columns,
-  data,
-  getRowId,
-  pageSize = 10,
-  actions,
-  onSort,
-  initialSort,
-}: TableProps<T>) {
-  const [sortKey, setSortKey] = useState<string | undefined>(initialSort?.key)
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(initialSort?.direction ?? 'asc')
-  const [page, setPage] = useState(0)
+function SortArrow({ direction }: { direction: 'asc' | 'desc' | null }) {
+  if (direction === 'asc') return <span className="text-amber-500">▲</span>
+  if (direction === 'desc') return <span className="text-amber-500">▼</span>
+  return <span className="text-slate-600">↕</span>
+}
+
+function ChevronLeft() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
+    </svg>
+  )
+}
+
+function ChevronRight() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+    </svg>
+  )
+}
+
+function Table<T>({ columns, data, getRowId, pageSize = 10 }: TableProps<T>) {
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(1)
 
   const sortedData = useMemo(() => {
     if (!sortKey) return data
-    const sorted = [...data].sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[sortKey]
-      const bVal = (b as Record<string, unknown>)[sortKey]
-      if (aVal === bVal) return 0
-      if (aVal === null || aVal === undefined) return 1
-      if (bVal === null || bVal === undefined) return -1
-      const result =
-        typeof aVal === 'string' && typeof bVal === 'string'
-          ? aVal.localeCompare(bVal)
-          : (aVal as number) - (bVal as number)
-      return sortDir === 'asc' ? result : -result
+    const col = columns.find((c) => c.key === sortKey)
+    if (!col || !col.sortable) return data
+    const copy = [...data]
+    copy.sort((a, b) => {
+      const av = a[sortKey as keyof T]
+      const bv = b[sortKey as keyof T]
+      if (av == null && bv == null) return 0
+      if (av == null) return 1
+      if (bv == null) return -1
+      if (typeof av === 'number' && typeof bv === 'number') {
+        return sortDir === 'asc' ? av - bv : bv - av
+      }
+      return sortDir === 'asc'
+        ? String(av).localeCompare(String(bv))
+        : String(bv).localeCompare(String(av))
     })
-    return sorted
-  }, [data, sortKey, sortDir])
+    return copy
+  }, [data, columns, sortKey, sortDir])
 
-  const pageCount = Math.max(1, Math.ceil(sortedData.length / pageSize))
-  const currentPage = Math.min(page, pageCount - 1)
-  const pagedData = sortedData.slice(
-    currentPage * pageSize,
-    currentPage * pageSize + pageSize,
-  )
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * pageSize
+  const pagedData = sortedData.slice(start, start + pageSize)
 
-  const handleSort = (key: string) => {
-    const nextDir = sortKey === key && sortDir === 'asc' ? 'desc' : 'asc'
-    setSortKey(key)
-    setSortDir(nextDir)
-    onSort?.(key, nextDir)
+  const toggleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+    setPage(1)
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-700">
+    <div className="w-full overflow-hidden rounded-xl border border-slate-700">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-800 text-slate-400">
-            <tr>
+        <table className="w-full border-collapse text-left text-sm">
+          <thead>
+            <tr className="bg-slate-800 text-slate-400">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={cn('px-4 py-3 font-semibold', col.className)}
-                >
-                  {col.sortable ? (
-                    <button
-                      onClick={() => handleSort(col.key)}
-                      className="inline-flex items-center gap-1 hover:text-slate-100"
-                    >
-                      {col.header}
-                      {sortKey === col.key ? (
-                        sortDir === 'asc' ? (
-                          <ArrowUp className="h-3.5 w-3.5 text-amber-500" />
-                        ) : (
-                          <ArrowDown className="h-3.5 w-3.5 text-amber-500" />
-                        )
-                      ) : (
-                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
-                      )}
-                    </button>
-                  ) : (
-                    col.header
+                  className={cn(
+                    'whitespace-nowrap px-4 py-3 font-medium uppercase tracking-wide',
+                    col.sortable && 'cursor-pointer select-none',
+                    col.className,
                   )}
+                  onClick={col.sortable ? () => toggleSort(col.key) : undefined}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {col.header}
+                    {col.sortable && (
+                      <SortArrow
+                        direction={sortKey === col.key ? sortDir : null}
+                      />
+                    )}
+                  </span>
                 </th>
               ))}
-              {actions && <th className="px-4 py-3 text-right font-semibold">Actions</th>}
+              {actions && (
+                <th className="whitespace-nowrap px-4 py-3 font-medium uppercase tracking-wide text-right">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody>
             {pagedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-4 py-10 text-center text-slate-500"
+                  className="bg-slate-900 px-4 py-10 text-center text-slate-500"
                 >
-                  No records found.
+                  {emptyMessage ?? 'No records found.'}
                 </td>
               </tr>
             ) : (
               pagedData.map((row) => (
-                <tr key={getRowId(row)} className="bg-slate-900 hover:bg-slate-800/60">
+                <tr
+                  key={getRowId(row)}
+                  className="border-t border-slate-800 bg-slate-900 transition-colors hover:bg-slate-800/60"
+                >
                   {columns.map((col) => (
-                    <td key={col.key} className={cn('px-4 py-3 text-slate-300', col.className)}>
-                      {col.render ? col.render(row) : (row as Record<string, ReactNode>)[col.key]}
+                    <td
+                      key={col.key}
+                      className={cn('px-4 py-3 text-slate-300', col.className)}
+                    >
+                      {col.render ? col.render(row) : (row[col.key as keyof T] as ReactNode)}
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-4 py-3 text-right">{actions(row)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-slate-300">
+                      {actions(row)}
+                    </td>
                   )}
                 </tr>
               ))
@@ -126,31 +149,33 @@ function Table<T>({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between border-t border-slate-700 bg-slate-800 px-4 py-3">
-        <span className="text-xs text-slate-400">
-          Showing {sortedData.length === 0 ? 0 : currentPage * pageSize + 1}–
-          {Math.min((currentPage + 1) * pageSize, sortedData.length)} of {sortedData.length}
-        </span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={currentPage === 0}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 text-slate-300 transition-colors hover:bg-slate-700 disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-xs text-slate-400">
-            {currentPage + 1} / {pageCount}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-800 bg-slate-900 px-4 py-3 text-sm text-slate-400">
+          <span>
+            Page {currentPage} of {totalPages}
           </span>
-          <button
-            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-            disabled={currentPage >= pageCount - 1}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 text-slate-300 transition-colors hover:bg-slate-700 disabled:opacity-40"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Previous page"
+            >
+              <ChevronLeft />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Next page"
+            >
+              <ChevronRight />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

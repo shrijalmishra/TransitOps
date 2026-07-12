@@ -1,17 +1,11 @@
-export type UserRole = 'admin' | 'manager' | 'dispatcher' | 'driver'
-
 export interface User {
   id: number
   email: string
   name: string
-  role: UserRole
+  role: string
 }
 
-export type VehicleType =
-  | 'Light Commercial'
-  | 'Medium Commercial'
-  | 'Heavy Commercial'
-
+export type VehicleType = 'Light Commercial' | 'Medium Commercial' | 'Heavy Commercial'
 export type VehicleStatus = 'Available' | 'On Trip' | 'In Shop' | 'Retired'
 
 export interface Vehicle {
@@ -28,7 +22,6 @@ export interface Vehicle {
 }
 
 export type LicenseCategory = 'LMV' | 'LMV-TR' | 'HMV' | 'HMV-TR' | 'Other'
-
 export type DriverStatus = 'Available' | 'On Trip' | 'Off Duty' | 'Suspended'
 
 export interface Driver {
@@ -156,50 +149,11 @@ export interface AuthResponse {
   user: User
 }
 
-export const VEHICLE_STATUSES: VehicleStatus[] = [
-  'Available',
-  'On Trip',
-  'In Shop',
-  'Retired',
-]
-
-export const VEHICLE_TYPES: VehicleType[] = [
-  'Light Commercial',
-  'Medium Commercial',
-  'Heavy Commercial',
-]
-
-export const DRIVER_STATUSES: DriverStatus[] = [
-  'Available',
-  'On Trip',
-  'Off Duty',
-  'Suspended',
-]
-
-export const LICENSE_CATEGORIES: LicenseCategory[] = [
-  'LMV',
-  'LMV-TR',
-  'HMV',
-  'HMV-TR',
-  'Other',
-]
-
-export const TRIP_STATUSES: TripStatus[] = [
-  'Draft',
-  'Dispatched',
-  'Completed',
-  'Cancelled',
-]
-
+export const VEHICLE_TYPES: VehicleType[] = ['Light Commercial', 'Medium Commercial', 'Heavy Commercial']
+export const VEHICLE_STATUSES: VehicleStatus[] = ['Available', 'On Trip', 'In Shop', 'Retired']
+export const DRIVER_STATUSES: DriverStatus[] = ['Available', 'On Trip', 'Off Duty', 'Suspended']
+export const LICENSE_CATEGORIES: LicenseCategory[] = ['LMV', 'LMV-TR', 'HMV', 'HMV-TR', 'Other']
+export const TRIP_STATUSES: TripStatus[] = ['Draft', 'Dispatched', 'Completed', 'Cancelled']
 export const MAINTENANCE_STATUSES: MaintenanceStatus[] = ['Active', 'Completed']
-
-export const MAINTENANCE_TYPES: string[] = [
-  'Oil Change',
-  'Brake Service',
-  'Tire Replacement',
-  'Inspection',
-  'Repair',
-  'Other',
-]
-
+export const MAINTENANCE_TYPES: string[] = ['Oil Change', 'Brake Service', 'Tire Replacement', 'Inspection', 'Repair', 'Other']
 export const EXPENSE_TYPES: ExpenseType[] = ['Toll', 'Maintenance', 'Other']

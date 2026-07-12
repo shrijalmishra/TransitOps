@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   BarChart,
   Bar,
@@ -19,12 +19,22 @@ import {
   Clock,
   Users,
   Gauge,
+  Fuel,
+  CircleDollarSign,
+  BadgeCheck,
 } from 'lucide-react'
 import api from '../services/api'
 import { getErrorMessage } from '../services/api'
-import type { DashboardKpis, Vehicle, VehicleStatus } from '../types'
+import type {
+  DashboardKpis,
+  Vehicle,
+  VehicleStatus,
+  FuelLog,
+  Maintenance,
+  Driver,
+} from '../types'
 import { useToast } from '../context/ToastContext'
-import { getStatusClassName, getStatusLabel } from '../utils/statusHelpers'
+import { formatCurrency, getStatusLabel, getStatusClassName } from '../utils/statusHelpers'
 import { cn } from '../utils/cn'
 
 const chartTooltipStyle = {
@@ -50,7 +60,7 @@ const KpiCard = ({
 }: {
   label: string
   value: string | number
-  icon: React.ReactNode
+  icon: ReactNode
   accent: string
 }) => (
   <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
@@ -65,9 +75,12 @@ const KpiCard = ({
 )
 
 const Dashboard = () => {
-  const { error: toastError, success } = useToast()
+  const { error: toastError } = useToast()
   const [kpis, setKpis] = useState<DashboardKpis | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [fuelLogs, setFuelLogs] = useState<FuelLog[]>([])
+  const [maintenance, setMaintenance] = useState<Maintenance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,13 +89,19 @@ const Dashboard = () => {
     const load = async () => {
       setLoading(true)
       try {
-        const [kpisRes, vehiclesRes] = await Promise.all([
+        const [kpisRes, vehiclesRes, driversRes, fuelRes, maintenanceRes] = await Promise.all([
           api.get<DashboardKpis>('/dashboard/kpis'),
           api.get<Vehicle[]>('/vehicles'),
+          api.get<Driver[]>('/drivers'),
+          api.get<FuelLog[]>('/fuel-expenses/fuel-logs'),
+          api.get<Maintenance[]>('/maintenance'),
         ])
         if (!active) return
         setKpis(kpisRes.data)
         setVehicles(vehiclesRes.data)
+        setDrivers(driversRes.data)
+        setFuelLogs(fuelRes.data)
+        setMaintenance(maintenanceRes.data)
         setError(null)
       } catch (err) {
         if (!active) return
@@ -134,6 +153,57 @@ const Dashboard = () => {
     if (series.length) series[series.length - 1].utilization = base
     return series
   }, [kpis])
+
+  const totalFuelSpend = useMemo(
+    () => fuelLogs.reduce((sum, f) => sum + (Number(f.totalCost) || 0), 0),
+    [fuelLogs],
+  )
+
+  const totalMaintenanceCost = useMemo(
+    () => maintenance.reduce((sum, m) => sum + (Number(m.cost) || 0), 0),
+    [maintenance],
+  )
+
+  const availableDrivers = useMemo(
+    () => drivers.filter((d) => d.status === 'Available').length,
+    [drivers],
+  )
+
+  const recentActivity = useMemo(() => {
+    const items: { text: string; time: string }[] = []
+    const dispatched = [...vehicles]
+      .filter((v) => v.status === 'On Trip')
+      .slice(0, 2)
+    dispatched.forEach((v, i) => {
+      items.push({
+        text: `Vehicle ${v.registrationNumber} dispatched and currently on trip`,
+        time: i === 0 ? 'Just now' : 'Recent',
+      })
+    })
+    const completedMaintenance = [...maintenance]
+      .filter((m) => m.status === 'Completed')
+      .slice(0, 1)
+    completedMaintenance.forEach((m) => {
+      items.push({
+        text: `Maintenance completed on vehicle #${m.vehicleId} (${m.type})`,
+        time: 'Earlier',
+      })
+    })
+    const recentFuel = [...fuelLogs].slice(0, 1)
+    recentFuel.forEach((f) => {
+      items.push({
+        text: `Fuel log recorded for vehicle #${f.vehicleId} (${formatCurrency(f.totalCost)})`,
+        time: 'Earlier',
+      })
+    })
+    while (items.length < 4) {
+      items.push({
+        text: 'All systems nominal — no new events',
+        time: '',
+      })
+    }
+    return items.slice(0, 4)
+  }, [vehicles, maintenance, fuelLogs])
 
   return (
     <div className="space-y-6">
@@ -204,6 +274,40 @@ const Dashboard = () => {
             />
           </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-400">Total Fuel Spend</p>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15">
+                  <Fuel className="h-5 w-5 text-amber-400" />
+                </span>
+              </div>
+              <p className="mt-3 text-2xl font-bold text-slate-100">
+                {formatCurrency(totalFuelSpend)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-400">Maintenance Cost</p>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-500/15">
+                  <CircleDollarSign className="h-5 w-5 text-rose-400" />
+                </span>
+              </div>
+              <p className="mt-3 text-2xl font-bold text-slate-100">
+                {formatCurrency(totalMaintenanceCost)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-400">Available Drivers</p>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/15">
+                  <BadgeCheck className="h-5 w-5 text-emerald-400" />
+                </span>
+              </div>
+              <p className="mt-3 text-2xl font-bold text-slate-100">{availableDrivers}</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-slate-200">
@@ -267,6 +371,19 @@ const Dashboard = () => {
                 {vehicles.length} tracked vehicles.
               </p>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+            <h2 className="mb-3 text-sm font-semibold text-slate-200">Recent Activity</h2>
+            <ul className="space-y-2.5">
+              {recentActivity.map((item, i) => (
+                <li key={i} className="flex items-center gap-3 text-sm text-slate-400">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                  <span className="flex-1 text-slate-300">{item.text}</span>
+                  {item.time && <span className="text-xs text-slate-500">{item.time}</span>}
+                </li>
+              ))}
+            </ul>
           </div>
         </>
       )}

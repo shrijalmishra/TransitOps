@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   BarChart,
   Bar,
@@ -7,38 +7,22 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
+  Legend,
   Cell,
 } from 'recharts'
 import { Download, FileText } from 'lucide-react'
-import type { VehicleRoi, FuelEfficiency, OperationalCost } from '../types'
+import api, { getErrorMessage } from '../services/api'
+import type {
+  FuelEfficiency,
+  OperationalCost,
+  VehicleRoi,
+} from '../types'
+import { useToast } from '../context/ToastContext'
+import Table, { type Column } from '../components/ui/Table'
 import Button from '../components/ui/Button'
-import { formatCurrency } from '../utils/statusHelpers'
+import { formatCurrency, formatNumber } from '../utils/statusHelpers'
 
-const ROI_MOCK: VehicleRoi[] = [
-  { vehicleId: 'TRK-101', vehicleNumber: 'TRK-101', totalCost: 18000, totalRevenue: 64000, roi: 255 },
-  { vehicleId: 'TRK-102', vehicleNumber: 'TRK-102', totalCost: 22000, totalRevenue: 71000, roi: 222 },
-  { vehicleId: 'BUS-201', vehicleNumber: 'BUS-201', totalCost: 31000, totalRevenue: 52000, roi: 67 },
-]
-
-const EFFICIENCY_MOCK: FuelEfficiency[] = [
-  { vehicleId: 'TRK-101', vehicleNumber: 'TRK-101', fuelEfficiency: 7.1, totalDistance: 42000, totalFuelCost: 9000 },
-  { vehicleId: 'TRK-102', vehicleNumber: 'TRK-102', fuelEfficiency: 6.4, totalDistance: 51000, totalFuelCost: 11000 },
-  { vehicleId: 'BUS-201', vehicleNumber: 'BUS-201', fuelEfficiency: 4.2, totalDistance: 38000, totalFuelCost: 14000 },
-]
-
-const COST_MOCK: OperationalCost[] = [
-  { category: 'fuel', amount: 41000, period: '2026-06' },
-  { category: 'maintenance', amount: 23000, period: '2026-06' },
-  { category: 'salary', amount: 48000, period: '2026-06' },
-  { category: 'insurance', amount: 12500, period: '2026-06' },
-  { category: 'tolls', amount: 1850, period: '2026-06' },
-]
-
-const COLORS = ['#f59e0b', '#f97316', '#10b981', '#3b82f6', '#8b5cf6']
-
-const tooltipStyle = {
+const chartTooltipStyle = {
   backgroundColor: '#1e293b',
   border: '1px solid #334155',
   borderRadius: '8px',
@@ -46,25 +30,176 @@ const tooltipStyle = {
   fontSize: '12px',
 }
 
+const ROI_COLORS = ['#f59e0b', '#f97316', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
+
 const Reports = () => {
-  const [reportType, setReportType] = useState<'roi' | 'efficiency' | 'cost'>('roi')
+  const { success, error: toastError } = useToast()
+  const [tab, setTab] = useState<'efficiency' | 'cost' | 'roi'>('efficiency')
+  const [efficiency, setEfficiency] = useState<FuelEfficiency[]>([])
+  const [operational, setOperational] = useState<OperationalCost[]>([])
+  const [roi, setRoi] = useState<VehicleRoi[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [effRes, opRes, roiRes] = await Promise.all([
+        api.get<FuelEfficiency[]>('/reports/fuel-efficiency'),
+        api.get<OperationalCost[]>('/reports/operational-cost'),
+        api.get<VehicleRoi[]>('/reports/vehicle-roi'),
+      ])
+      setEfficiency(effRes.data)
+      setOperational(opRes.data)
+      setRoi(roiRes.data)
+      setError(null)
+    } catch (err) {
+      const msg = getErrorMessage(err)
+      setError(msg)
+      toastError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }, [toastError])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await api.get('/reports/export-csv', { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'transitops-report.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      success('CSV exported successfully.')
+    } catch (err) {
+      toastError(getErrorMessage(err))
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const efficiencyData = useMemo(
+    () =>
+      efficiency.map((e) => ({
+        name: e.registrationNumber,
+        label: e.vehicleName,
+        fuelEfficiency: e.fuelEfficiency,
+      })),
+    [efficiency],
+  )
+
+  const operationalData = useMemo(
+    () =>
+      operational.map((o) => ({
+        name: o.registrationNumber,
+        label: o.vehicleName,
+        fuelCost: o.fuelCost,
+        maintenanceCost: o.maintenanceCost,
+      })),
+    [operational],
+  )
 
   const roiData = useMemo(
-    () => ROI_MOCK.map((r) => ({ name: r.vehicleNumber, roi: r.roi })),
-    [],
-  )
-  const efficiencyData = useMemo(
-    () => EFFICIENCY_MOCK.map((e) => ({ name: e.vehicleNumber, mpg: e.fuelEfficiency })),
-    [],
-  )
-  const costData = useMemo(
     () =>
-      COST_MOCK.map((c) => ({
-        name: c.category.charAt(0).toUpperCase() + c.category.slice(1),
-        value: c.amount,
+      roi.map((r) => ({
+        name: r.registrationNumber,
+        label: r.vehicleName,
+        roi: r.roi,
       })),
-    [],
+    [roi],
   )
+
+  const efficiencyColumns: Column<FuelEfficiency>[] = [
+    { key: 'registrationNumber', header: 'Reg #', sortable: true },
+    { key: 'vehicleName', header: 'Vehicle', sortable: true },
+    {
+      key: 'totalDistance',
+      header: 'Distance (km)',
+      sortable: true,
+      render: (e) => formatNumber(e.totalDistance),
+    },
+    {
+      key: 'totalFuel',
+      header: 'Total Fuel (L)',
+      sortable: true,
+      render: (e) => formatNumber(e.totalFuel),
+    },
+    {
+      key: 'fuelEfficiency',
+      header: 'Efficiency (km/L)',
+      sortable: true,
+      render: (e) => e.fuelEfficiency.toFixed(2),
+    },
+  ]
+
+  const operationalColumns: Column<OperationalCost>[] = [
+    { key: 'registrationNumber', header: 'Reg #', sortable: true },
+    { key: 'vehicleName', header: 'Vehicle', sortable: true },
+    {
+      key: 'fuelCost',
+      header: 'Fuel Cost',
+      sortable: true,
+      render: (o) => formatCurrency(o.fuelCost),
+    },
+    {
+      key: 'maintenanceCost',
+      header: 'Maintenance Cost',
+      sortable: true,
+      render: (o) => formatCurrency(o.maintenanceCost),
+    },
+    {
+      key: 'totalOperationalCost',
+      header: 'Total Cost',
+      sortable: true,
+      render: (o) => formatCurrency(o.totalOperationalCost),
+    },
+  ]
+
+  const roiColumns: Column<VehicleRoi>[] = [
+    { key: 'registrationNumber', header: 'Reg #', sortable: true },
+    { key: 'vehicleName', header: 'Vehicle', sortable: true },
+    {
+      key: 'revenue',
+      header: 'Revenue',
+      sortable: true,
+      render: (r) => formatCurrency(r.revenue),
+    },
+    {
+      key: 'totalCost',
+      header: 'Total Cost',
+      sortable: true,
+      render: (r) => formatCurrency(r.totalCost),
+    },
+    {
+      key: 'netProfit',
+      header: 'Net Profit',
+      sortable: true,
+      render: (r) => (
+        <span className={r.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+          {formatCurrency(r.netProfit)}
+        </span>
+      ),
+    },
+    {
+      key: 'roi',
+      header: 'ROI %',
+      sortable: true,
+      render: (r) => (
+        <span className={r.roi >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+          {r.roi.toFixed(1)}%
+        </span>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -75,72 +210,121 @@ const Reports = () => {
           </h1>
           <p className="text-sm text-slate-400">Fleet analytics and operational insights</p>
         </div>
-        <Button variant="secondary" className="gap-2">
-          <Download className="h-4 w-4" /> Export
+        <Button variant="secondary" className="gap-2" onClick={handleExport} loading={exporting}>
+          <Download className="h-4 w-4" /> Export CSV
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {(['roi', 'efficiency', 'cost'] as const).map((t) => (
+        {(['efficiency', 'cost', 'roi'] as const).map((t) => (
           <button
             key={t}
-            onClick={() => setReportType(t)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-colors ${
-              reportType === t
+            onClick={() => setTab(t)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              tab === t
                 ? 'bg-amber-500 text-slate-950'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            {t === 'roi' ? 'Vehicle ROI' : t === 'efficiency' ? 'Fuel Efficiency' : 'Operational Cost'}
+            {t === 'efficiency'
+              ? 'Fuel Efficiency'
+              : t === 'cost'
+                ? 'Operational Cost'
+                : 'Vehicle ROI'}
           </button>
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
-        <h2 className="mb-4 text-sm font-semibold text-slate-200">
-          {reportType === 'roi'
-            ? 'Return on Investment by Vehicle (%)'
-            : reportType === 'efficiency'
-              ? 'Fuel Efficiency by Vehicle (mpg)'
-              : 'Operational Cost Breakdown'}
-        </h2>
-        <div className="h-80">
-          {reportType === 'cost' ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={costData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={110}
-                  label={(entry) => formatCurrency(entry.value)}
-                >
-                  {costData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={reportType === 'roi' ? roiData : efficiencyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#33415555' }} />
-                <Bar
-                  dataKey={reportType === 'roi' ? 'roi' : 'mpg'}
-                  fill="#f59e0b"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+      {error && !loading && (
+        <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+          {error}
         </div>
-      </div>
+      )}
+
+      {loading ? (
+        <div className="h-80 animate-pulse rounded-xl border border-slate-700 bg-slate-800" />
+      ) : (
+        <>
+          <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+            <h2 className="mb-4 text-sm font-semibold text-slate-200">
+              {tab === 'efficiency'
+                ? 'Fuel Efficiency by Vehicle (km/L)'
+                : tab === 'cost'
+                  ? 'Operational Cost by Vehicle (₹)'
+                  : 'Return on Investment by Vehicle (%)'}
+            </h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                {tab === 'efficiency' ? (
+                  <BarChart data={efficiencyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                    <YAxis stroke="#64748b" fontSize={12} />
+                    <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: '#33415555' }} />
+                    <Bar dataKey="fuelEfficiency" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                ) : tab === 'cost' ? (
+                  <BarChart data={operationalData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                    <YAxis stroke="#64748b" fontSize={12} />
+                    <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: '#33415555' }} />
+                    <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
+                    <Bar dataKey="fuelCost" name="Fuel Cost" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="maintenanceCost"
+                      name="Maintenance Cost"
+                      fill="#f97316"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                ) : (
+                  <BarChart data={roiData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                    <YAxis stroke="#64748b" fontSize={12} />
+                    <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: '#33415555' }} />
+                    <Bar dataKey="roi" radius={[4, 4, 0, 0]}>
+                      {roiData.map((entry, i) => (
+                        <Cell
+                          key={entry.name}
+                          fill={entry.roi >= 0 ? ROI_COLORS[i % ROI_COLORS.length] : '#f43f5e'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-800 p-5">
+            <h2 className="mb-4 text-sm font-semibold text-slate-200">Detailed Breakdown</h2>
+            {tab === 'efficiency' ? (
+              <Table
+                columns={efficiencyColumns}
+                data={efficiency}
+                getRowId={(e) => String(e.vehicleId)}
+                pageSize={8}
+              />
+            ) : tab === 'cost' ? (
+              <Table
+                columns={operationalColumns}
+                data={operational}
+                getRowId={(o) => String(o.vehicleId)}
+                pageSize={8}
+              />
+            ) : (
+              <Table
+                columns={roiColumns}
+                data={roi}
+                getRowId={(r) => String(r.vehicleId)}
+                pageSize={8}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

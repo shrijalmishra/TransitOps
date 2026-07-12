@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Plus, Search, Pencil, PowerOff, Truck } from 'lucide-react'
 import api, { getErrorMessage } from '../services/api'
 import type { Vehicle, VehicleStatus, VehicleType } from '../types'
@@ -112,7 +112,7 @@ const Vehicles = () => {
     return Object.keys(errs).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!validate()) return
     setSubmitting(true)
@@ -142,11 +142,11 @@ const Vehicles = () => {
     }
   }
 
-  const handleDelete = async (vehicle: Vehicle) => {
+  const handleRetire = async (vehicle: Vehicle) => {
     if (!window.confirm(`Retire vehicle ${vehicle.registrationNumber}? This sets its status to Retired.`))
       return
     try {
-      await api.delete(`/vehicles/${vehicle.id}`)
+      await api.put<Vehicle>(`/vehicles/${vehicle.id}`)
       success(`${vehicle.registrationNumber} retired.`)
       await load()
     } catch (err) {
@@ -157,7 +157,7 @@ const Vehicles = () => {
   const filtered = useMemo(
     () =>
       vehicles.filter((v) =>
-        `${v.registrationNumber} ${v.name} ${v.type}`
+        `${v.registrationNumber} ${v.name}`
           .toLowerCase()
           .includes(search.toLowerCase()),
       ),
@@ -230,6 +230,7 @@ const Vehicles = () => {
           data={filtered}
           getRowId={(v) => String(v.id)}
           pageSize={8}
+          emptyMessage="No vehicles found."
           actions={(v) => (
             <div className="flex items-center justify-end gap-1">
               <Button
@@ -244,7 +245,7 @@ const Vehicles = () => {
                 variant="ghost"
                 size="sm"
                 className="text-rose-400 hover:bg-rose-500/10"
-                onClick={() => handleDelete(v)}
+                onClick={() => handleRetire(v)}
                 title="Retire"
               >
                 <PowerOff className="h-4 w-4" />
