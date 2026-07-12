@@ -2,6 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User, Role } = require('../models');
+const { validate } = require('../middleware/validate');
+const { authSchemas } = require('../validations');
 
 const router = express.Router();
 
@@ -11,12 +13,9 @@ const generateToken = (userId) => {
   });
 };
 
-router.post('/register', async (req, res) => {
+router.post('/register', validate(authSchemas.register), async (req, res) => {
   try {
     const { email, password, name, roleName } = req.body;
-    if (!email || !password || !name) {
-      return res.status(400).json({ message: 'Please provide email, password, and name' });
-    }
     let role = await Role.findOne({ where: { name: roleName || 'Fleet Manager' } });
     if (!role) {
       role = await Role.findOne({ where: { name: 'Fleet Manager' } });
@@ -46,12 +45,9 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', validate(authSchemas.login), async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
-    }
     const user = await User.findOne({
       where: { email },
       include: [{ model: Role, as: 'role' }],

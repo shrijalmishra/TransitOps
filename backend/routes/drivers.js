@@ -1,6 +1,8 @@
 const express = require('express');
 const { auth, checkRole } = require('../middleware/auth');
 const { Driver, Trip } = require('../models');
+const { validate } = require('../middleware/validate');
+const { driverSchemas } = require('../validations');
 
 const router = express.Router();
 
@@ -26,7 +28,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), validate(driverSchemas.create), async (req, res) => {
   try {
     const { licenseNumber } = req.body;
     const existing = await Driver.findOne({ where: { licenseNumber } });
@@ -38,7 +40,7 @@ router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) =
   }
 });
 
-router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager']), validate(driverSchemas.update), async (req, res) => {
   try {
     const driver = await Driver.findByPk(req.params.id);
     if (!driver) return res.status(404).json({ message: 'Driver not found' });

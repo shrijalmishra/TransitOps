@@ -1,6 +1,8 @@
 const express = require('express');
 const { auth, checkRole } = require('../middleware/auth');
 const { Vehicle, Driver, Trip, Maintenance } = require('../models');
+const { validate } = require('../middleware/validate');
+const { tripSchemas } = require('../validations');
 
 const router = express.Router();
 
@@ -23,15 +25,9 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), validate(tripSchemas.create), async (req, res) => {
   try {
     const { source, destination, vehicleId, driverId, cargoWeight, plannedDistance } = req.body;
-    if (!source || !destination || !vehicleId || !driverId || cargoWeight === undefined || !plannedDistance) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
-    }
-    if (cargoWeight <= 0 || plannedDistance <= 0) {
-      return res.status(400).json({ message: 'Cargo weight and planned distance must be greater than 0' });
-    }
     const vehicle = await Vehicle.findByPk(vehicleId);
     const driver = await Driver.findByPk(driverId);
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
@@ -118,7 +114,7 @@ router.put('/:id/dispatch', auth, checkRole(['Admin', 'Fleet Manager']), async (
   }
 });
 
-router.put('/:id/complete', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.put('/:id/complete', auth, checkRole(['Admin', 'Fleet Manager']), validate(tripSchemas.complete), async (req, res) => {
   try {
     const { actualOdometer, fuelConsumed, revenue } = req.body;
     const trip = await Trip.findByPk(req.params.id, {

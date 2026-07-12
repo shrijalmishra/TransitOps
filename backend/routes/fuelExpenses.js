@@ -1,6 +1,8 @@
 const express = require('express');
 const { auth, checkRole } = require('../middleware/auth');
 const { FuelLog, Expense, Vehicle, Trip } = require('../models');
+const { validate } = require('../middleware/validate');
+const { fuelExpenseSchemas } = require('../validations');
 
 const router = express.Router();
 
@@ -24,12 +26,9 @@ router.get('/fuel-logs', auth, async (req, res) => {
   }
 });
 
-router.post('/fuel-logs', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst']), async (req, res) => {
+router.post('/fuel-logs', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst']), validate(fuelExpenseSchemas.createFuelLog), async (req, res) => {
   try {
     const { vehicleId, tripId, liters, costPerLiter, totalCost, date } = req.body;
-    if (!vehicleId || liters === undefined || !costPerLiter || totalCost === undefined) {
-      return res.status(400).json({ message: 'Please provide vehicleId, liters, costPerLiter, and totalCost' });
-    }
     const vehicle = await Vehicle.findByPk(vehicleId);
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
     if (tripId) {
@@ -71,12 +70,9 @@ router.get('/expenses', auth, async (req, res) => {
   }
 });
 
-router.post('/expenses', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst']), async (req, res) => {
+router.post('/expenses', auth, checkRole(['Admin', 'Fleet Manager', 'Financial Analyst']), validate(fuelExpenseSchemas.createExpense), async (req, res) => {
   try {
     const { vehicleId, tripId, type, amount, description, date } = req.body;
-    if (!vehicleId || !type || amount === undefined) {
-      return res.status(400).json({ message: 'Please provide vehicleId, type, and amount' });
-    }
     const vehicle = await Vehicle.findByPk(vehicleId);
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
     if (tripId) {

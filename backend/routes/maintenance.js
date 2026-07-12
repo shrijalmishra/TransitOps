@@ -1,6 +1,8 @@
 const express = require('express');
 const { auth, checkRole } = require('../middleware/auth');
 const { Maintenance, Vehicle } = require('../models');
+const { validate } = require('../middleware/validate');
+const { maintenanceSchemas } = require('../validations');
 
 const router = express.Router();
 
@@ -16,12 +18,9 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), async (req, res) => {
+router.post('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), validate(maintenanceSchemas.create), async (req, res) => {
   try {
     const { vehicleId, type, description, cost, startDate, endDate, status } = req.body;
-    if (!vehicleId || !type || !cost || !startDate) {
-      return res.status(400).json({ message: 'Please provide vehicleId, type, cost, and startDate' });
-    }
     const vehicle = await Vehicle.findByPk(vehicleId);
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
 
@@ -46,7 +45,7 @@ router.post('/', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), 
   }
 });
 
-router.put('/:id/close', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), async (req, res) => {
+router.put('/:id/close', auth, checkRole(['Admin', 'Fleet Manager', 'Safety Officer']), validate(maintenanceSchemas.close), async (req, res) => {
   try {
     const maintenance = await Maintenance.findByPk(req.params.id, {
       include: [{ model: Vehicle, as: 'vehicle' }],

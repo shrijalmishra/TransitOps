@@ -1,6 +1,8 @@
 const express = require('express');
 const { auth, checkRole } = require('../middleware/auth');
 const { Vehicle, Trip, Maintenance, FuelLog, Expense } = require('../models');
+const { validate } = require('../middleware/validate');
+const { vehicleSchemas } = require('../validations');
 
 const router = express.Router();
 
@@ -27,7 +29,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), validate(vehicleSchemas.create), async (req, res) => {
   try {
     const { registrationNumber } = req.body;
     const existing = await Vehicle.findOne({ where: { registrationNumber } });
@@ -39,7 +41,7 @@ router.post('/', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) =
   }
 });
 
-router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager']), async (req, res) => {
+router.put('/:id', auth, checkRole(['Admin', 'Fleet Manager']), validate(vehicleSchemas.update), async (req, res) => {
   try {
     const vehicle = await Vehicle.findByPk(req.params.id);
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
