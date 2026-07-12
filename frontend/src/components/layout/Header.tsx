@@ -49,16 +49,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
       <div className="relative ml-auto flex items-center gap-2 sm:gap-4" ref={menuRef}>
         
-        {/* Fake Search & Notifications to match enterprise look */}
-        <div className="hidden items-center gap-3 pr-4 border-r border-white/10 sm:flex">
-          <button type="button" className="rounded-full p-2 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors">
-            <Search className="h-4 w-4" />
-          </button>
-          <button type="button" className="relative rounded-full p-2 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
-          </button>
-        </div>
 
         <button
           type="button"
