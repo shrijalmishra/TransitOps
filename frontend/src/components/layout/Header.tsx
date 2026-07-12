@@ -1,24 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Menu, ChevronDown, LogOut, User as UserIcon } from 'lucide-react'
+import { Menu, ChevronDown, LogOut, User as UserIcon, Search, Bell } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getInitials } from '../../utils/statusHelpers'
 
-const BREADCRUMB_MAP: Record<string, string> = {
-  dashboard: 'Dashboard',
-  vehicles: 'Vehicles',
-  drivers: 'Drivers',
-  trips: 'Trips',
-  maintenance: 'Maintenance',
-  'fuel-expenses': 'Fuel & Expenses',
-  reports: 'Reports',
-}
-
-function useBreadcrumb(): string {
-  const { pathname } = useLocation()
-  const segment = pathname.split('/')[1] || 'dashboard'
-  return BREADCRUMB_MAP[segment] ?? 'Dashboard'
-}
+// Removing Breadcrumb map to replace with standard Enterprise branding
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -28,7 +13,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const breadcrumb = useBreadcrumb()
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -44,7 +28,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const displayName = user?.name ?? 'User'
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-700 bg-slate-800 px-4">
+    <header className="sticky top-0 z-30 flex h-20 items-center gap-4 border-b border-white/5 bg-slate-950/20 px-6 backdrop-blur-xl">
       <button
         type="button"
         onClick={onMenuClick}
@@ -54,27 +38,45 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         <Menu className="h-5 w-5" />
       </button>
 
-      <nav className="text-sm" aria-label="Breadcrumb">
-        <span className="text-slate-400">TransitOps</span>
-        <span className="mx-2 text-slate-500">/</span>
-        <span className="font-medium text-slate-100">{breadcrumb}</span>
-      </nav>
+      <div className="flex flex-col">
+        <h1 className="text-sm font-semibold tracking-wide text-slate-200 sm:text-base">
+          TransitOps
+        </h1>
+        <p className="hidden text-xs text-slate-500 sm:block">
+          Fleet Operations Platform
+        </p>
+      </div>
 
-      <div className="relative ml-auto" ref={menuRef}>
+      <div className="relative ml-auto flex items-center gap-2 sm:gap-4" ref={menuRef}>
+        
+        {/* Fake Search & Notifications to match enterprise look */}
+        <div className="hidden items-center gap-3 pr-4 border-r border-white/10 sm:flex">
+          <button type="button" className="rounded-full p-2 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors">
+            <Search className="h-4 w-4" />
+          </button>
+          <button type="button" className="relative rounded-full p-2 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors">
+            <Bell className="h-4 w-4" />
+            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-700"
+          className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-slate-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-blue-500/20">
             {initials}
           </span>
-          <span className="hidden text-sm font-medium text-slate-200 sm:block">
-            {displayName}
-          </span>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <div className="hidden text-left sm:block">
+            <p className="text-sm font-medium text-slate-200 leading-tight">
+              {displayName}
+            </p>
+            <p className="text-xs text-slate-500">Admin User</p>
+          </div>
+          <ChevronDown className="h-4 w-4 text-slate-500" />
         </button>
 
         {menuOpen && (

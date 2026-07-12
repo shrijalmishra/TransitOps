@@ -25,6 +25,7 @@ import {
   CircleDollarSign,
   BadgeCheck,
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import { getErrorMessage } from '../services/api'
 import type {
@@ -51,8 +52,8 @@ const chartTooltipStyle = {
 
 const STATUS_COLORS: Record<VehicleStatus, string> = {
   Available: '#10b981',
-  'On Trip': '#f59e0b',
-  'In Shop': '#f43f5e',
+  'On Trip': '#3b82f6',
+  'In Shop': '#f97316',
   Retired: '#64748b',
 }
 
@@ -60,28 +61,43 @@ const KpiCard = ({
   label,
   value,
   icon,
-  accent,
-  gradient,
+  accentColor,
+  trend,
+  emptyText,
 }: {
   label: string
   value: string | number
   icon: ReactNode
-  accent: string
-  gradient: string
+  accentColor: string
+  trend?: string
+  emptyText?: string
 }) => (
-  <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:bg-slate-900/60">
-    <div className={cn('absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100', gradient)} />
-    <div className="relative z-10 flex items-center justify-between">
-      <p className="text-sm font-medium uppercase tracking-wider text-slate-400">{label}</p>
-      <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110', accent)}>
-        {icon}
-      </span>
+  <div className="group relative overflow-hidden rounded-2xl glass-panel p-6 transition-all duration-250 hover:-translate-y-1">
+    <div className="relative z-10 flex flex-col justify-between h-full">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-4xl font-bold tracking-tight text-white mb-2">
+            {value === 0 && emptyText ? (
+              <span className="text-lg font-medium text-slate-500">{emptyText}</span>
+            ) : (
+              value
+            )}
+          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <p className="font-medium text-slate-400">{label}</p>
+            {trend && <span className="text-xs font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">{trend}</span>}
+          </div>
+        </div>
+        <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 transition-transform duration-300 group-hover:scale-110', accentColor)}>
+          {icon}
+        </span>
+      </div>
     </div>
-    <p className="relative z-10 mt-4 text-3xl font-bold tracking-tight text-white">{value}</p>
   </div>
 )
 
 const Dashboard = () => {
+  const { user } = useAuth()
   const { error: toastError } = useToast()
   const [kpis, setKpis] = useState<DashboardKpis | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -213,10 +229,26 @@ const Dashboard = () => {
   }, [vehicles, maintenance, fuelLogs])
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-400">Fleet overview and key performance indicators</p>
+    <div className="space-y-8 animate-fade-in pb-12">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            Good Afternoon, {user?.name?.split(' ')[0] ?? 'Admin'}
+          </h1>
+          <p className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-400 sm:gap-4">
+            <span className="flex items-center gap-1.5 font-medium text-slate-300">
+              <Gauge className="h-4 w-4 text-blue-400" /> Fleet Utilization: {kpis?.fleetUtilization ?? 0}%
+            </span>
+            <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block"></span>
+            <span className="flex items-center gap-1.5 font-medium text-slate-300">
+              <Route className="h-4 w-4 text-blue-400" /> {kpis?.activeTrips ?? 0} Active Trips
+            </span>
+            <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block"></span>
+            <span className="flex items-center gap-1.5 font-medium text-orange-400">
+              <Wrench className="h-4 w-4" /> {kpis?.inMaintenanceVehicles ?? 0} Maintenance Alerts
+            </span>
+          </p>
+        </div>
       </div>
 
       {error && !loading && (
@@ -226,105 +258,81 @@ const Dashboard = () => {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={i}
-              className="h-32 animate-pulse rounded-2xl border border-white/5 bg-slate-900/40"
+              className="h-32 animate-pulse rounded-2xl glass-panel"
             />
           ))}
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="space-y-6">
+          {/* Top Row: Core Operations */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
-              label="Active Vehicles"
-              value={kpis?.activeVehicles ?? 0}
-              icon={<Truck className="h-5 w-5 text-amber-400" />}
-              accent="bg-amber-500/20 shadow-[inset_0_0_10px_rgba(245,158,11,0.2)]"
-              gradient="bg-gradient-to-br from-amber-500/5 to-transparent"
+              label="Active Trips"
+              value={kpis?.activeTrips ?? 0}
+              emptyText="No active trips"
+              trend="+12%"
+              icon={<Route className="h-5 w-5" />}
+              accentColor="text-blue-400"
             />
             <KpiCard
               label="Available Vehicles"
               value={kpis?.availableVehicles ?? 0}
-              icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-              accent="bg-emerald-500/20 shadow-[inset_0_0_10px_rgba(16,185,129,0.2)]"
-              gradient="bg-gradient-to-br from-emerald-500/5 to-transparent"
+              emptyText="No vehicles available"
+              trend="+4%"
+              icon={<CheckCircle2 className="h-5 w-5" />}
+              accentColor="text-emerald-400"
             />
             <KpiCard
-              label="In Shop"
-              value={kpis?.inMaintenanceVehicles ?? 0}
-              icon={<Wrench className="h-5 w-5 text-rose-400" />}
-              accent="bg-rose-500/20 shadow-[inset_0_0_10px_rgba(244,63,94,0.2)]"
-              gradient="bg-gradient-to-br from-rose-500/5 to-transparent"
-            />
-            <KpiCard
-              label="Active Trips"
-              value={kpis?.activeTrips ?? 0}
-              icon={<Route className="h-5 w-5 text-sky-400" />}
-              accent="bg-sky-500/20 shadow-[inset_0_0_10px_rgba(14,165,233,0.2)]"
-              gradient="bg-gradient-to-br from-sky-500/5 to-transparent"
-            />
-            <KpiCard
-              label="Pending Trips"
-              value={kpis?.pendingTrips ?? 0}
-              icon={<Clock className="h-5 w-5 text-orange-400" />}
-              accent="bg-orange-500/20 shadow-[inset_0_0_10px_rgba(249,115,22,0.2)]"
-              gradient="bg-gradient-to-br from-orange-500/5 to-transparent"
+              label="Active Vehicles"
+              value={kpis?.activeVehicles ?? 0}
+              emptyText="No vehicles active"
+              trend="+2%"
+              icon={<Truck className="h-5 w-5" />}
+              accentColor="text-blue-400"
             />
             <KpiCard
               label="Drivers On Duty"
               value={kpis?.driversOnDuty ?? 0}
-              icon={<Users className="h-5 w-5 text-violet-400" />}
-              accent="bg-violet-500/20 shadow-[inset_0_0_10px_rgba(139,92,246,0.2)]"
-              gradient="bg-gradient-to-br from-violet-500/5 to-transparent"
-            />
-            <KpiCard
-              label="Fleet Utilization"
-              value={kpis ? `${kpis.fleetUtilization}%` : '0%'}
-              icon={<Gauge className="h-5 w-5 text-amber-400" />}
-              accent="bg-amber-500/20 shadow-[inset_0_0_10px_rgba(245,158,11,0.2)]"
-              gradient="bg-gradient-to-br from-amber-500/5 to-transparent"
+              emptyText="No drivers on duty"
+              icon={<Users className="h-5 w-5" />}
+              accentColor="text-slate-400"
             />
           </div>
 
+          {/* Second Row: Fleet Health & Financials */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <div className="group overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md transition-all hover:bg-slate-900/60">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Total Fuel Spend</p>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-transform group-hover:scale-110">
-                  <Fuel className="h-5 w-5 text-amber-400" />
-                </span>
-              </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">
-                {formatCurrency(totalFuelSpend)}
-              </p>
-            </div>
-            <div className="group overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md transition-all hover:bg-slate-900/60">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Maintenance Cost</p>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15 shadow-[inset_0_0_10px_rgba(244,63,94,0.1)] transition-transform group-hover:scale-110">
-                  <CircleDollarSign className="h-5 w-5 text-rose-400" />
-                </span>
-              </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">
-                {formatCurrency(totalMaintenanceCost)}
-              </p>
-            </div>
-            <div className="group overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md transition-all hover:bg-slate-900/60">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Available Drivers</p>
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)] transition-transform group-hover:scale-110">
-                  <BadgeCheck className="h-5 w-5 text-emerald-400" />
-                </span>
-              </div>
-              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{availableDrivers}</p>
-            </div>
+            <KpiCard
+              label="Fuel Spend"
+              value={formatCurrency(totalFuelSpend)}
+              emptyText="No fuel expenses"
+              trend="-5%"
+              icon={<Fuel className="h-5 w-5" />}
+              accentColor="text-slate-400"
+            />
+            <KpiCard
+              label="Maintenance Cost"
+              value={formatCurrency(totalMaintenanceCost)}
+              emptyText="No maintenance costs"
+              trend="+1.2%"
+              icon={<CircleDollarSign className="h-5 w-5" />}
+              accentColor="text-orange-400"
+            />
+            <KpiCard
+              label="In Shop"
+              value={kpis?.inMaintenanceVehicles ?? 0}
+              emptyText="No vehicles in shop"
+              icon={<Wrench className="h-5 w-5" />}
+              accentColor="text-orange-400"
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md">
-              <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-slate-200">
+            <div className="glass-panel p-6 rounded-2xl">
+              <h2 className="mb-6 text-sm font-medium text-slate-400">
                 Vehicle Status Distribution
               </h2>
               <div className="h-72">
@@ -334,7 +342,7 @@ const Dashboard = () => {
                     <XAxis dataKey="label" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                    <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50} animationDuration={1000} animationEasing="ease-out">
                       {statusCounts.map((entry) => (
                         <Cell key={entry.status} fill={STATUS_COLORS[entry.status]} />
                       ))}
@@ -346,15 +354,11 @@ const Dashboard = () => {
                 {statusCounts.map((entry) => (
                   <span
                     key={entry.status}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium',
-                      getStatusClassName(entry.status),
-                      'bg-slate-900/50 backdrop-blur-sm'
-                    )}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300"
                   >
                     <span
                       className="h-2 w-2 rounded-full shadow-[0_0_8px_currentColor]"
-                      style={{ backgroundColor: STATUS_COLORS[entry.status] }}
+                      style={{ backgroundColor: STATUS_COLORS[entry.status], color: STATUS_COLORS[entry.status] }}
                     />
                     {entry.label}: {entry.count}
                   </span>
@@ -362,8 +366,8 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md">
-              <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-slate-200">
+            <div className="glass-panel p-6 rounded-2xl">
+              <h2 className="mb-6 text-sm font-medium text-slate-400">
                 Fleet Utilization Trend
               </h2>
               <div className="h-72">
@@ -371,8 +375,8 @@ const Dashboard = () => {
                   <AreaChart data={utilizationTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -383,29 +387,31 @@ const Dashboard = () => {
                       type="monotone"
                       dataKey="utilization"
                       name="Utilization %"
-                      stroke="#f59e0b"
+                      stroke="#3b82f6"
                       strokeWidth={3}
                       fillOpacity={1}
                       fill="url(#colorUv)"
-                      activeDot={{ r: 6, fill: '#f59e0b', stroke: '#0f172a', strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: '#3b82f6', stroke: '#0f172a', strokeWidth: 2 }}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
               <p className="mt-4 text-sm text-slate-400">
-                Current fleet utilization of <strong className="text-amber-500">{kpis?.fleetUtilization ?? 0}%</strong> across{' '}
+                Current fleet utilization of <strong className="text-blue-400">{kpis?.fleetUtilization ?? 0}%</strong> across{' '}
                 {vehicles.length} tracked vehicles.
               </p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-6 shadow-lg backdrop-blur-md">
-            <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-slate-200">Recent Activity</h2>
+          <div className="glass-panel p-6 rounded-2xl">
+            <h2 className="mb-5 text-sm font-medium text-slate-400">Recent Activity</h2>
             <ul className="space-y-4">
               {recentActivity.map((item, i) => (
                 <li key={i} className="flex items-center gap-4 text-sm">
-                  <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
-                    <div className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                  <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10">
+                    <div className="h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
                   </div>
                   <span className="flex-1 text-slate-300 font-medium">{item.text}</span>
                   {item.time && <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400 font-medium">{item.time}</span>}
@@ -413,7 +419,7 @@ const Dashboard = () => {
               ))}
             </ul>
           </div>
-        </>
+        </div>
       )}
     </div>
   )
