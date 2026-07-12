@@ -12,8 +12,8 @@ import Maintenance from './pages/Maintenance'
 import FuelExpenses from './pages/FuelExpenses'
 import Reports from './pages/Reports'
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, loading } = useAuth()
+const RoleProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
+  const { user, token, loading } = useAuth()
 
   if (loading) {
     return (
@@ -25,6 +25,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (!token) {
     return <Navigate to="/login" replace />
+  }
+
+  if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>
@@ -64,18 +68,18 @@ const App: React.FC = () => {
       />
       <Route
         element={
-          <ProtectedRoute>
+          <RoleProtectedRoute>
             <Layout />
-          </ProtectedRoute>
+          </RoleProtectedRoute>
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/vehicles" element={<Vehicles />} />
-        <Route path="/drivers" element={<Drivers />} />
-        <Route path="/trips" element={<Trips />} />
-        <Route path="/maintenance" element={<Maintenance />} />
-        <Route path="/fuel-expenses" element={<FuelExpenses />} />
-        <Route path="/reports" element={<Reports />} />
+        <Route path="/vehicles" element={<RoleProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst']}><Vehicles /></RoleProtectedRoute>} />
+        <Route path="/drivers" element={<RoleProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst']}><Drivers /></RoleProtectedRoute>} />
+        <Route path="/trips" element={<RoleProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst', 'Driver']}><Trips /></RoleProtectedRoute>} />
+        <Route path="/maintenance" element={<RoleProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Safety Officer']}><Maintenance /></RoleProtectedRoute>} />
+        <Route path="/fuel-expenses" element={<RoleProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Financial Analyst']}><FuelExpenses /></RoleProtectedRoute>} />
+        <Route path="/reports" element={<RoleProtectedRoute allowedRoles={['Admin', 'Fleet Manager', 'Financial Analyst', 'Safety Officer']}><Reports /></RoleProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

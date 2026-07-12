@@ -3,6 +3,7 @@ import { Plus, Search, Wrench, XCircle, AlertTriangle } from 'lucide-react'
 import api, { getErrorMessage } from '../services/api'
 import type { Maintenance, MaintenanceStatus, Vehicle } from '../types'
 import { MAINTENANCE_STATUSES, MAINTENANCE_TYPES } from '../types'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Table, { type Column } from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
@@ -33,12 +34,15 @@ const emptyForm: MaintenanceForm = {
 }
 
 const Maintenance = () => {
+  const { user } = useAuth()
   const { success, error: toastError } = useToast()
   const [records, setRecords] = useState<Maintenance[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  const canManage = user?.role === 'Admin' || user?.role === 'Fleet Manager'
 
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<MaintenanceForm>(emptyForm)
@@ -196,7 +200,7 @@ const Maintenance = () => {
       header: 'Actions',
       className: 'text-right',
       render: (m) =>
-        m.status === 'Active' ? (
+        canManage && m.status === 'Active' ? (
           <div className="flex items-center justify-end gap-1">
             <Button
               variant="secondary"
@@ -220,9 +224,11 @@ const Maintenance = () => {
           </h1>
           <p className="text-sm text-slate-400">Track service, repairs and inspections</p>
         </div>
-        <Button className="gap-2" onClick={openAdd}>
-          <Plus className="h-4 w-4" /> Schedule Service
-        </Button>
+        {canManage && (
+          <Button className="gap-2" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Schedule Service
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-sm">

@@ -3,6 +3,7 @@ import { Plus, Search, Send, XCircle, CheckCircle2, Eye } from 'lucide-react'
 import api, { getErrorMessage } from '../services/api'
 import type { Driver, Trip, TripStatus, Vehicle } from '../types'
 import { TRIP_STATUSES } from '../types'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Table, { type Column } from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
@@ -45,12 +46,15 @@ const emptyComplete: CompleteForm = {
 const FILTERS: (TripStatus | 'All')[] = ['All', ...TRIP_STATUSES]
 
 const Trips = () => {
+  const { user } = useAuth()
   const { success, error: toastError } = useToast()
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<TripStatus | 'All'>('All')
   const [search, setSearch] = useState('')
+
+  const canManage = user?.role === 'Admin' || user?.role === 'Fleet Manager'
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
@@ -276,7 +280,7 @@ const Trips = () => {
               <Eye className="h-4 w-4" />
             </Button>
           )}
-          {t.status === 'Draft' && (
+          {canManage && t.status === 'Draft' && (
             <>
               <Button
                 variant="secondary"
@@ -296,7 +300,7 @@ const Trips = () => {
               </Button>
             </>
           )}
-          {t.status === 'Dispatched' && (
+          {canManage && t.status === 'Dispatched' && (
             <>
               <Button
                 variant="secondary"
@@ -328,9 +332,11 @@ const Trips = () => {
           <h1 className="text-2xl font-bold text-slate-100">Trips</h1>
           <p className="text-sm text-slate-400">Plan and track fleet trips</p>
         </div>
-        <Button className="gap-2" onClick={openAdd}>
-          <Plus className="h-4 w-4" /> New Trip
-        </Button>
+        {canManage && (
+          <Button className="gap-2" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> New Trip
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

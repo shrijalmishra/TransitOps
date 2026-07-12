@@ -6,6 +6,7 @@ import {
   VEHICLE_STATUSES,
   VEHICLE_TYPES,
 } from '../types'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Table, { type Column } from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
@@ -36,11 +37,14 @@ const emptyForm: VehicleForm = {
 }
 
 const Vehicles = () => {
+  const { user } = useAuth()
   const { success, error: toastError } = useToast()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  const canManage = user?.role === 'Admin' || user?.role === 'Fleet Manager'
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Vehicle | null>(null)
@@ -201,9 +205,11 @@ const Vehicles = () => {
           <h1 className="text-2xl font-bold text-slate-100">Vehicles</h1>
           <p className="text-sm text-slate-400">Manage your fleet inventory</p>
         </div>
-        <Button className="gap-2" onClick={openAdd}>
-          <Plus className="h-4 w-4" /> Add Vehicle
-        </Button>
+        {canManage && (
+          <Button className="gap-2" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add Vehicle
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-sm">
@@ -231,7 +237,7 @@ const Vehicles = () => {
           getRowId={(v) => String(v.id)}
           pageSize={8}
           emptyMessage="No vehicles found."
-          actions={(v) => (
+          actions={canManage ? (v) => (
             <div className="flex items-center justify-end gap-1">
               <Button
                 variant="ghost"
@@ -251,7 +257,7 @@ const Vehicles = () => {
                 <PowerOff className="h-4 w-4" />
               </Button>
             </div>
-          )}
+          ) : undefined}
         />
       )}
 

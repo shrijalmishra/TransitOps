@@ -3,6 +3,7 @@ import { Plus, Search, Pencil, Ban, ShieldAlert, ShieldCheck } from 'lucide-reac
 import api, { getErrorMessage } from '../services/api'
 import type { Driver, DriverStatus } from '../types'
 import { DRIVER_STATUSES, LICENSE_CATEGORIES } from '../types'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import Table, { type Column } from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
@@ -40,11 +41,14 @@ const scoreColor = (score: number) =>
   score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-500' : 'bg-rose-500'
 
 const Drivers = () => {
+  const { user } = useAuth()
   const { success, error: toastError } = useToast()
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  const canManage = user?.role === 'Admin' || user?.role === 'Fleet Manager' || user?.role === 'Safety Officer'
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Driver | null>(null)
@@ -243,9 +247,11 @@ const Drivers = () => {
           <h1 className="text-2xl font-bold text-slate-100">Drivers</h1>
           <p className="text-sm text-slate-400">Manage driver roster and licenses</p>
         </div>
-        <Button className="gap-2" onClick={openAdd}>
-          <Plus className="h-4 w-4" /> Add Driver
-        </Button>
+        {canManage && (
+          <Button className="gap-2" onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add Driver
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-sm">
@@ -273,7 +279,7 @@ const Drivers = () => {
           getRowId={(d) => String(d.id)}
           pageSize={8}
           emptyMessage="No drivers found."
-          actions={(d) => (
+          actions={canManage ? (d) => (
             <div className="flex items-center justify-end gap-1">
               <Button variant="ghost" size="sm" onClick={() => openEdit(d)} title="Edit">
                 <Pencil className="h-4 w-4" />
@@ -300,7 +306,7 @@ const Drivers = () => {
                 </Button>
               )}
             </div>
-          )}
+          ) : undefined}
         />
       )}
 

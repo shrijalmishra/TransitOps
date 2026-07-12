@@ -11,21 +11,23 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
+import { useAuth } from '../../context/AuthContext'
 
 interface NavItem {
   to: string
   label: string
   icon: LucideIcon
+  allowedRoles?: string[]
 }
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/vehicles', label: 'Vehicles', icon: Truck },
-  { to: '/drivers', label: 'Drivers', icon: DriversIcon },
-  { to: '/trips', label: 'Trips', icon: Route },
-  { to: '/maintenance', label: 'Maintenance', icon: Wrench },
-  { to: '/fuel-expenses', label: 'Fuel & Expenses', icon: Fuel },
-  { to: '/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/vehicles', label: 'Vehicles', icon: Truck, allowedRoles: ['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst'] },
+  { to: '/drivers', label: 'Drivers', icon: DriversIcon, allowedRoles: ['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst'] },
+  { to: '/trips', label: 'Trips', icon: Route, allowedRoles: ['Admin', 'Fleet Manager', 'Safety Officer', 'Financial Analyst', 'Driver'] },
+  { to: '/maintenance', label: 'Maintenance', icon: Wrench, allowedRoles: ['Admin', 'Fleet Manager', 'Safety Officer'] },
+  { to: '/fuel-expenses', label: 'Fuel & Expenses', icon: Fuel, allowedRoles: ['Admin', 'Fleet Manager', 'Financial Analyst'] },
+  { to: '/reports', label: 'Reports', icon: BarChart3, allowedRoles: ['Admin', 'Fleet Manager', 'Financial Analyst', 'Safety Officer'] },
 ]
 
 // Avoid name collision with Drivers page icon if needed, but imported correctly above
@@ -39,6 +41,14 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+  const { user } = useAuth()
+  
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (!item.allowedRoles) return true
+    if (!user?.role) return false
+    return item.allowedRoles.includes(user.role)
+  })
+
   const renderLogo = (showClose: boolean) => (
     <div className="flex h-20 items-center justify-between border-b border-white/5 px-6">
       <div className="flex items-center gap-3">
@@ -62,7 +72,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const renderNav = () => (
     <nav className="flex-1 space-y-1.5 overflow-y-auto px-4 py-6">
-      {NAV_ITEMS.map((item) => (
+      {filteredNavItems.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
