@@ -119,7 +119,7 @@ TransitOps/
 ## Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/TransitOps.git
+git clone https://github.com/shrijalmishra/TransitOps.git
 
 cd TransitOps
 ```
